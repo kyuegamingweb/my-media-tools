@@ -471,7 +471,6 @@ export default function Home() {
                       <span className="bg-[#283823] text-[#73ee98] text-[10px] font-bold px-2 py-1 rounded-md border border-[#354f2f]">1.3.8</span>
                     </div>
 
-                    {/* Drag & Drop Box with Loading State */}
                     <label className={`border-2 border-dashed border-[#354f2f] hover:border-[#73ee98] bg-[#141812] hover:bg-[#182016] transition-all rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer mb-4 block group ${loadingBg ? "pointer-events-none opacity-80" : ""}`}>
                       <input 
                         type="file" 
@@ -517,6 +516,41 @@ export default function Home() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* GCASH DONATION CARD (Nakalagay sa ibaba ng Tools) */}
+                <div className="bg-[#1c231a] border border-[#2a3627] hover:border-[#007dfc] transition-all rounded-[28px] p-6 flex flex-col justify-between shadow-lg group">
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-[#007dfc]/10 border border-[#007dfc]/30 flex items-center justify-center text-lg text-[#007dfc] font-bold">💳</div>
+                      <div>
+                        <h2 className="text-base font-bold text-white group-hover:text-[#007dfc]">Support Me</h2>
+                        <span className="text-xs text-gray-400">GCash Donation</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-[#141812] border border-[#283525] rounded-2xl p-4 text-center space-y-2 mb-4">
+                      <div className="flex justify-center mb-2">
+                        <img 
+                          src="/gcash-qr.png" 
+                          alt="GCash QR Code" 
+                          className="w-28 h-28 object-contain rounded-xl border border-[#2a3627] bg-white p-1" 
+                        />
+                      </div>
+                      <p className="text-xs text-gray-300 font-medium">Name: <span className="text-white font-bold">Kyue</span></p>
+                      <p className="text-xs text-gray-300 font-medium">Number: <span className="text-[#73ee98] font-bold">0912-345-6789</span></p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("09123456789");
+                      alert("GCash number copied to clipboard!");
+                    }}
+                    className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-bold py-2.5 rounded-xl text-xs border border-[#3e5837] transition"
+                  >
+                    📋 Copy GCash Number
+                  </button>
                 </div>
 
               </div>
