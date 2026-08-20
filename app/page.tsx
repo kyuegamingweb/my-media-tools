@@ -33,15 +33,14 @@ export default function Home() {
     }
   };
 
-  const executeDownload = (mediaUrl: string, type: "video" | "audio") => {
-    if (!mediaUrl) return;
+  const handlePhoneDownload = (downloadLink: string) => {
+    if (!downloadLink) return;
     
-    // Direct stream trigger sa backend route natin
-    const downloadProxyUrl = `/api/download?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
-    
+    // Mobile-friendly direct link trigger
     const a = document.createElement("a");
-    a.href = downloadProxyUrl;
-    a.download = `tiktok-${type}-${Date.now()}.${type === "audio" ? "mp3" : "mp4"}`;
+    a.href = downloadLink;
+    a.rel = "noopener noreferrer";
+    a.target = "_self"; // Directly opens download prompt on Android/iOS
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -81,19 +80,19 @@ export default function Home() {
           <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
             {videoUrl && (
               <button
-                onClick={() => executeDownload(videoUrl, "video")}
+                onClick={() => handlePhoneDownload(videoUrl)}
                 className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
               >
-                ⚡ Direct Download MP4
+                ⚡ Download Video (MP4)
               </button>
             )}
 
             {audioUrl && (
               <button
-                onClick={() => executeDownload(audioUrl, "audio")}
+                onClick={() => handlePhoneDownload(audioUrl)}
                 className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
               >
-                🎵 Direct Download MP3
+                🎵 Download Audio (MP3)
               </button>
             )}
           </div>

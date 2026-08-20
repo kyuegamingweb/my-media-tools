@@ -8,40 +8,62 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
   }
 
-  // Primary Scraper: TikWM
   try {
-    const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl.trim())}`, {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      cache: "no-store",
+    // Call Cobalt API for MP4 Video
+    const videoRes = await fetch("https://api.cobalt.tools/api/json", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: targetUrl.trim(),
+        videoQuality: "max",
+      }),
     });
-    const result = await res.json();
 
-    if (result.code === 0 && result.data) {
+    const videoData = await videoRes.json();
+
+    // Call Cobalt API for MP3 Audio
+    const audioRes = await fetch("https://api.cobalt.tools/api/json", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: targetUrl.trim(),
+        downloadMode: "audio",
+        audioFormat: "mp3",
+      }),
+    });
+
+    const audioData = await audioRes.json();
+
+    const videoUrl = videoData.url || videoData.picker?.[0]?.url;
+    const audioUrl = audioData.url || videoUrl;
+
+    if (videoUrl) {
+      return NextResponse.json({ videoUrl, audioUrl });
+    }
+  } catch (err) {
+    console.error("Cobalt API primary failed, using fallback...");
+  }
+
+  // Backup Provider (TikWM) if Cobalt is slow
+  try {
+    const resBackup = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl.trim())}`);
+    const backupData = await resBackup.json();
+
+    if (backupData.code === 0 && backupData.data) {
       return NextResponse.json({
-        videoUrl: result.data.play || result.data.wmplay,
-        audioUrl: result.data.music || result.data.music_info?.play || result.data.play,
+        videoUrl: backupData.data.play || backupData.data.wmplay,
+        audioUrl: backupData.data.music || backupData.data.play,
       });
     }
   } catch (e) {
-    console.error("TikWM failed");
+    console.error("Fallback failed");
   }
 
-  // Backup Scraper: Tiklydown
-  try {
-    const resBackup = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl.trim())}`, {
-      cache: "no-store",
-    });
-    const backupResult = await resBackup.json();
-
-    if (backupResult.video?.noWatermark) {
-      return NextResponse.json({
-        videoUrl: backupResult.video.noWatermark,
-        audioUrl: backupResult.music?.play_url || backupResult.video.noWatermark,
-      });
-    }
-  } catch (e) {
-    console.error("Backup failed");
-  }
-
-  return NextResponse.json({ error: "Hindi makuha ang link. Pakisiguradong tama ang TikTok URL." }, { status: 400 });
+  return NextResponse.json({ error: "Hindi makuha ang link. Paki-check ang TikTok URL." }, { status: 400 });
 }
