@@ -5,14 +5,16 @@ import { useState } from "react";
 export default function Home() {
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [downloadingType, setDownloadingType] = useState<"video" | "audio" | null>(null);
 
   const handleProcess = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
     setLoading(true);
     setVideoUrl("");
+    setAudioUrl("");
 
     try {
       const res = await fetch(`/api/tiktok?url=${encodeURIComponent(url)}`);
@@ -20,6 +22,7 @@ export default function Home() {
 
       if (data.downloadUrl) {
         setVideoUrl(data.downloadUrl);
+        if (data.audioUrl) setAudioUrl(data.audioUrl);
       } else {
         alert("Hindi makuha ang video link.");
       }
@@ -31,12 +34,13 @@ export default function Home() {
     }
   };
 
-  const handleDownload = async () => {
-    if (!videoUrl) return;
-    setDownloading(true);
+  // GENERIC DIRECT DOWNLOAD HANDLER FOR BOTH MP4 AND MP3
+  const handleDownload = async (mediaUrl: string, filename: string, type: "video" | "audio") => {
+    if (!mediaUrl) return;
+    setDownloadingType(type);
 
     try {
-      const proxyUrl = `/api/download?url=${encodeURIComponent(videoUrl)}`;
+      const proxyUrl = `/api/download?url=${encodeURIComponent(mediaUrl)}`;
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error("Download failed");
 
@@ -45,7 +49,7 @@ export default function Home() {
 
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `tiktok-video-${Date.now()}.mp4`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
 
@@ -55,7 +59,7 @@ export default function Home() {
       console.error(err);
       alert("May error sa pag-download ng file.");
     } finally {
-      setDownloading(false);
+      setDownloadingType(null);
     }
   };
 
@@ -89,15 +93,27 @@ export default function Home() {
           </button>
         </form>
 
-        {videoUrl && (
-          <div className="mt-6 pt-6 border-t border-[#232b20]">
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
-            >
-              {downloading ? "Downloading MP4..." : "⚡ Direct Download MP4"}
-            </button>
+        {(videoUrl || audioUrl) && (
+          <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
+            {videoUrl && (
+              <button
+                onClick={() => handleDownload(videoUrl, `tiktok-video-${Date.now()}.mp4`, "video")}
+                disabled={downloadingType !== null}
+                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
+              >
+                {downloadingType === "video" ? "Downloading MP4..." : "⚡ Download Video (MP4)"}
+              </button>
+            )}
+
+            {audioUrl && (
+              <button
+                onClick={() => handleDownload(audioUrl, `tiktok-audio-${Date.now()}.mp3`, "audio")}
+                disabled={downloadingType !== null}
+                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
+              >
+                {downloadingType === "audio" ? "Downloading MP3..." : "🎵 Download Audio Only (MP3)"}
+              </button>
+            )}
           </div>
         )}
       </div>

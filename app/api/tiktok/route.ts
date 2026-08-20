@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
 
     if (result.code === 0 && result.data) {
       const playUrl = result.data.play || result.data.wmplay;
-      return NextResponse.json({ downloadUrl: playUrl });
+      const musicUrl = result.data.music; // Audio link
+
+      return NextResponse.json({ 
+        downloadUrl: playUrl,
+        audioUrl: musicUrl 
+      });
     } else {
       return NextResponse.json({ error: "Video not found" }, { status: 404 });
     }
