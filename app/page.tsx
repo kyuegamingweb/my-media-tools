@@ -23,8 +23,9 @@ export default function Home() {
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [resultAudioUrl, setResultAudioUrl] = useState("");
 
-  // States para sa Remove Background
+  // States para sa Remove Background (May loading & progress)
   const [loadingBg, setLoadingBg] = useState(false);
+  const [bgProgress, setBgProgress] = useState("");
   const [resultBgImage, setResultBgImage] = useState("");
 
   const [downloading, setDownloading] = useState(false);
@@ -105,20 +106,31 @@ export default function Home() {
     }
   };
 
-  // Handler para sa Remove Background
+  // Handler para sa Remove Background na may Progress
   const handleRemoveBackground = async (file: File) => {
     if (!file) return;
     setLoadingBg(true);
+    setBgProgress("Initializing AI...");
     setResultBgImage("");
 
     try {
-      const blob = await removeBackground(file);
+      const blob = await removeBackground(file, {
+        progress: (key: string, current: number, total: number) => {
+          const percent = Math.round((current / total) * 100);
+          if (key.includes("compute")) {
+            setBgProgress(`Processing: ${percent}%`);
+          } else {
+            setBgProgress(`Loading AI: ${percent}%`);
+          }
+        },
+      });
       const url = URL.createObjectURL(blob);
       setResultBgImage(url);
     } catch {
-      alert("May error sa pag-alis ng background.");
+      alert("May error sa pag-alis ng background. Paki-try ulit.");
     } finally {
       setLoadingBg(false);
+      setBgProgress("");
     }
   };
 
@@ -445,7 +457,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* REMOVE BACKGROUND CARD (Eksaktong UI na gusto mo) */}
+                {/* REMOVE BACKGROUND CARD WITH LOADING SPINNER */}
                 <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -459,22 +471,34 @@ export default function Home() {
                       <span className="bg-[#283823] text-[#73ee98] text-[10px] font-bold px-2 py-1 rounded-md border border-[#354f2f]">1.3.8</span>
                     </div>
 
-                    {/* Drag & Drop Box */}
-                    <label className="border-2 border-dashed border-[#354f2f] hover:border-[#73ee98] bg-[#141812] hover:bg-[#182016] transition-all rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer mb-4 block">
+                    {/* Drag & Drop Box with Loading State */}
+                    <label className={`border-2 border-dashed border-[#354f2f] hover:border-[#73ee98] bg-[#141812] hover:bg-[#182016] transition-all rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer mb-4 block group ${loadingBg ? "pointer-events-none opacity-80" : ""}`}>
                       <input 
                         type="file" 
                         accept="image/*" 
                         className="hidden" 
+                        disabled={loadingBg}
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
                             handleRemoveBackground(e.target.files[0]);
                           }
                         }}
                       />
-                      <div className="text-2xl mb-2">📁</div>
-                      <p className="text-xs text-gray-300 font-medium">
-                        {loadingBg ? "Processing AI Background Removal..." : "Drag & drop image here or click to select"}
-                      </p>
+                      {loadingBg ? (
+                        <div className="flex flex-col items-center space-y-2 py-2">
+                          <div className="w-6 h-6 border-2 border-[#73ee98] border-t-transparent rounded-full animate-spin"></div>
+                          <p className="text-xs text-[#73ee98] font-bold">
+                            {bgProgress || "Processing AI..."}
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-3xl mb-2 text-gray-400 group-hover:text-[#73ee98] transition-colors">📁</div>
+                          <p className="text-xs text-gray-300 font-medium px-2">
+                            Drag & drop video or image here or click to select
+                          </p>
+                        </>
+                      )}
                     </label>
 
                     {resultBgImage && (
