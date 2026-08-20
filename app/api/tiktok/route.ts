@@ -9,22 +9,47 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl)}`);
-    const result = await response.json();
+    // Direct call sa Cobalt public API instance (MP4 Video)
+    const videoRes = await fetch("https://api.cobalt.tools/api/json", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        videoQuality: "max",
+      }),
+    });
 
-    if (result.code === 0 && result.data) {
-      const playUrl = result.data.play || result.data.wmplay;
-      // Kukunin ang audio link kahit saan ito nakatago sa JSON
-      const musicUrl = result.data.music || result.data.music_info?.play;
+    const videoData = await videoRes.json();
 
-      return NextResponse.json({ 
-        downloadUrl: playUrl,
-        audioUrl: musicUrl || playUrl // Fallback sa video kung walang hiwalay na audio
-      });
+    // Direct call para sa MP3 Audio
+    const audioRes = await fetch("https://api.cobalt.tools/api/json", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        downloadMode: "audio",
+        audioFormat: "mp3",
+      }),
+    });
+
+    const audioData = await audioRes.json();
+
+    const downloadUrl = videoData.url || videoData.picker?.[0]?.url;
+    const audioUrl = audioData.url || downloadUrl;
+
+    if (downloadUrl) {
+      return NextResponse.json({ downloadUrl, audioUrl });
     } else {
-      return NextResponse.json({ error: "Video not found" }, { status: 404 });
+      return NextResponse.json({ error: "Hindi ma-parse ang TikTok link." }, { status: 400 });
     }
   } catch (err) {
-    return NextResponse.json({ error: "API connection error" }, { status: 500 });
+    console.error("Cobalt API error:", err);
+    return NextResponse.json({ error: "Server connection failed" }, { status: 500 });
   }
 }

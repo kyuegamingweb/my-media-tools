@@ -7,7 +7,6 @@ export default function Home() {
   const [videoUrl, setVideoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [downloadingType, setDownloadingType] = useState<"video" | "audio" | null>(null);
 
   const handleProcess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,68 +23,25 @@ export default function Home() {
         setVideoUrl(data.downloadUrl);
         setAudioUrl(data.audioUrl || data.downloadUrl);
       } else {
-        alert("Hindi makuha ang video/audio link.");
+        alert("Hindi makuha ang link. Subukan ang ibang TikTok link.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error sa pag-fetch ng TikTok link.");
+      alert("May error sa pag-fetch ng TikTok link.");
     } finally {
       setLoading(false);
     }
   };
 
-  const forceDownloadBlob = async (targetUrl: string, filename: string) => {
-    // Attempt 1: Route Proxy
-    try {
-      const proxyUrl = `/api/download?url=${encodeURIComponent(targetUrl)}`;
-      const res = await fetch(proxyUrl);
-      if (res.ok) {
-        const blob = await res.blob();
-        return blob;
-      }
-    } catch (e) {
-      console.log("Route proxy failed, trying CORS proxy fallback...");
-    }
-
-    // Attempt 2: Public CORS Proxy Fallback
-    const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-    const res = await fetch(corsProxyUrl);
-    if (!res.ok) throw new Error("Failed to fetch stream");
-    return await res.blob();
-  };
-
-  const handleDownload = async (mediaUrl: string, type: "video" | "audio") => {
-    if (!mediaUrl) return;
-    setDownloadingType(type);
-
-    const ext = type === "audio" ? "mp3" : "mp4";
-    const filename = `tiktok-${type}-${Date.now()}.${ext}`;
-
-    try {
-      const blob = await forceDownloadBlob(mediaUrl, filename);
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-
-      a.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error("Download Error:", err);
-      // Final Fallback: Direct Anchor Open
-      const a = document.createElement("a");
-      a.href = mediaUrl;
-      a.target = "_blank";
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } finally {
-      setDownloadingType(null);
-    }
+  const handleDirectDownload = (mediaUrl: string, filename: string) => {
+    const a = document.createElement("a");
+    a.href = mediaUrl;
+    a.download = filename;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   return (
@@ -122,21 +78,19 @@ export default function Home() {
           <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
             {videoUrl && (
               <button
-                onClick={() => handleDownload(videoUrl, "video")}
-                disabled={downloadingType !== null}
-                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
+                onClick={() => handleDirectDownload(videoUrl, `tiktok-video-${Date.now()}.mp4`)}
+                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
               >
-                {downloadingType === "video" ? "Downloading Video..." : "⚡ Download Video (MP4)"}
+                ⚡ Download Video (MP4)
               </button>
             )}
 
             {audioUrl && (
               <button
-                onClick={() => handleDownload(audioUrl, "audio")}
-                disabled={downloadingType !== null}
-                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
+                onClick={() => handleDirectDownload(audioUrl, `tiktok-audio-${Date.now()}.mp3`)}
+                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
               >
-                {downloadingType === "audio" ? "Downloading Audio..." : "🎵 Download Audio (MP3)"}
+                🎵 Download Audio (MP3)
               </button>
             )}
           </div>
