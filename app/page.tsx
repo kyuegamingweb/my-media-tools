@@ -10,12 +10,21 @@ export default function Home() {
   const [photoUrl, setPhotoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   
+  // Loading states para sa bawat button
+  const [loadingVideo, setLoadingVideo] = useState(false);
+  const [loadingPhoto, setLoadingPhoto] = useState(false);
+  const [loadingAudio, setLoadingAudio] = useState(false);
+  
   const [bgImage, setBgImage] = useState("");
   const [loadingBg, setLoadingBg] = useState(false);
 
   const handleDownload = async (url: string, type: 'video' | 'audio' | 'photo') => {
     if (!url) return alert("Ilagay muna ang link!");
     
+    if (type === 'video') setLoadingVideo(true);
+    if (type === 'photo') setLoadingPhoto(true);
+    if (type === 'audio') setLoadingAudio(true);
+
     try {
       const res = await fetch("/api/tiktok", {
         method: "POST",
@@ -24,20 +33,28 @@ export default function Home() {
       });
       const data = await res.json();
       
-      if (data.success) {
-        // Direct download / bukas ng link
+      if (data.success && data.downloadUrl) {
+        // I-fetch ang direct file para ma-trigger ang auto-download nang hindi nagbubukas ng bagong tab
+        const fileRes = await fetch(data.downloadUrl);
+        const blob = await fileRes.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
         const a = document.createElement('a');
-        a.href = data.downloadUrl;
-        a.target = '_blank';
-        a.download = `tiktok-${type}.${type === 'audio' ? 'mp3' : 'mp4'}`;
+        a.href = blobUrl;
+        a.download = `tiktok-${type}-${Date.now()}.${type === 'audio' ? 'mp3' : 'mp4'}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
       } else {
-        alert(data.error);
+        alert(data.error || "May error sa pag-download.");
       }
     } catch {
       alert("Error fetching media. Pakisubukan muli ang link.");
+    } finally {
+      if (type === 'video') setLoadingVideo(false);
+      if (type === 'photo') setLoadingPhoto(false);
+      if (type === 'audio') setLoadingAudio(false);
     }
   };
 
@@ -76,8 +93,12 @@ export default function Home() {
                     onChange={(e) => setVideoUrl(e.target.value)} 
                   />
                 </div>
-                <button onClick={() => handleDownload(videoUrl, 'video')} className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-3 rounded-xl font-bold text-sm transition">
-                  Download Video
+                <button 
+                  onClick={() => handleDownload(videoUrl, 'video')} 
+                  disabled={loadingVideo}
+                  className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-3 rounded-xl font-bold text-sm transition disabled:opacity-50"
+                >
+                  {loadingVideo ? "Processing..." : "Download Video"}
                 </button>
               </div>
 
@@ -96,8 +117,12 @@ export default function Home() {
                     onChange={(e) => setPhotoUrl(e.target.value)} 
                   />
                 </div>
-                <button onClick={() => handleDownload(photoUrl, 'photo')} className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-3 rounded-xl font-bold text-sm transition">
-                  Extract Photos
+                <button 
+                  onClick={() => handleDownload(photoUrl, 'photo')} 
+                  disabled={loadingPhoto}
+                  className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-3 rounded-xl font-bold text-sm transition disabled:opacity-50"
+                >
+                  {loadingPhoto ? "Processing..." : "Extract Photos"}
                 </button>
               </div>
 
@@ -116,8 +141,12 @@ export default function Home() {
                     onChange={(e) => setAudioUrl(e.target.value)} 
                   />
                 </div>
-                <button onClick={() => handleDownload(audioUrl, 'audio')} className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-3 rounded-xl font-bold text-sm transition">
-                  Extract MP3 Audio
+                <button 
+                  onClick={() => handleDownload(audioUrl, 'audio')} 
+                  disabled={loadingAudio}
+                  className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-3 rounded-xl font-bold text-sm transition disabled:opacity-50"
+                >
+                  {loadingAudio ? "Processing..." : "Extract MP3 Audio"}
                 </button>
               </div>
 
