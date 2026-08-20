@@ -10,7 +10,6 @@ export default function Home() {
   const [photoUrl, setPhotoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   
-  // Loading states para sa bawat button
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [loadingPhoto, setLoadingPhoto] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
@@ -34,18 +33,14 @@ export default function Home() {
       const data = await res.json();
       
       if (data.success && data.downloadUrl) {
-        // I-fetch ang direct file para ma-trigger ang auto-download nang hindi nagbubukas ng bagong tab
-        const fileRes = await fetch(data.downloadUrl);
-        const blob = await fileRes.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        
+        // Direct auto-download gamit ang hidden link trick para iwas CORS block
         const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `tiktok-${type}-${Date.now()}.${type === 'audio' ? 'mp3' : 'mp4'}`;
+        a.href = data.downloadUrl;
+        a.setAttribute('download', `tiktok-${type}-${Date.now()}.${type === 'audio' ? 'mp3' : 'mp4'}`);
+        a.setAttribute('target', '_blank');
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(blobUrl);
       } else {
         alert(data.error || "May error sa pag-download.");
       }
