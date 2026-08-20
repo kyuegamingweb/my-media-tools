@@ -9,38 +9,40 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Walang link na ibinigay." }, { status: 400 });
     }
 
-    // Gagamit tayo ng direktang alternatibong public API worker endpoint
-    const response = await fetch(`https://tdownv4.sl-bjs.workers.dev/?down=${encodeURIComponent(url)}`, {
+    // Paggamit ng alternatibong stable request format para sa TikTok link resolution
+    const response = await fetch(`https://tikwm.com/api/?url=${encodeURIComponent(url)}&count=12&cursor=0&web=1&hd=1`, {
+      method: "GET",
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://www.tikwm.com/",
       },
     });
 
-    if (!response.ok) {
-      return NextResponse.json({ error: "Hindi ma-access ang TikTok downloader service." }, { status: 500 });
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return NextResponse.json({ error: "Kasalukuyang naka-block ang server IP sa TikTok. Subukan ang manual download." }, { status: 500 });
     }
 
-    const data = await response.json();
+    if (data && data.code === 0 && data.data) {
+      const result = data.data;
 
-    // I-adapt ang response ayon sa structure ng worker endpoint
-    if (data && (data.videoUrl || data.url || data.play)) {
+      if (result.images && result.images.length > 0) {
+        return NextResponse.json({
+          type: "image",
+          images: result.images,
+        });
+      }
+
       return NextResponse.json({
         type: "video",
-        videoUrl: data.videoUrl || data.url || data.play,
-        audioUrl: data.audioUrl || data.music,
-      });
-    } else if (data && data.images) {
-      return NextResponse.json({
-        type: "image",
-        images: data.images,
+        videoUrl: result.hdplay || result.play,
+        audioUrl: result.music,
       });
     } else {
-      // Fallback: kung sakaling ang mismong endpoint ang nagbalik ng direktang link
-      return NextResponse.json({
-        type: "video",
-        videoUrl: data.data?.play || url,
-        audioUrl: data.data?.music,
-      });
+      return NextResponse.json({ error: data?.msg || "Hindi makuha ang media. Subukan ang ibang link." }, { status: 400 });
     }
 
   } catch (err: any) {
