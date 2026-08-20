@@ -4,7 +4,6 @@ export async function POST(req: Request) {
   try {
     const { url, type } = await req.json();
     
-    // Gumagamit tayo ng custom User-Agent para hindi ma-block ng TikTok/API servers
     const response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -14,19 +13,22 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (data.code === 0) {
+      if (type === 'photo') {
+        // Ibinabalik ang buong array ng images para sa slideshow photos
+        return NextResponse.json({
+          success: true,
+          images: data.data.images || [data.data.play],
+        });
+      }
+
       let downloadUrl = data.data.play;
-      
       if (type === 'audio') {
         downloadUrl = data.data.music;
-      } else if (type === 'photo') {
-        // Kung may mga litrato o slideshow
-        downloadUrl = data.data.images?.[0] || data.data.play;
       }
 
       return NextResponse.json({
         success: true,
         downloadUrl: downloadUrl,
-        title: data.data.title,
       });
     }
     
