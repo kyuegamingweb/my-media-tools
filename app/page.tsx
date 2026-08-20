@@ -17,57 +17,41 @@ export default function Home() {
     setAudioUrl("");
 
     try {
-      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(url)}`);
+      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(url.trim())}`);
       const data = await res.json();
 
       if (data.downloadUrl) {
         setVideoUrl(data.downloadUrl);
         setAudioUrl(data.audioUrl || data.downloadUrl);
       } else {
-        alert("Hindi makuha ang link. Pakisiguradong tama ang TikTok link.");
+        alert(data.error || "Hindi makuha ang link. Pakisiguradong valid ang TikTok URL.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error sa pag-fetch ng TikTok link.");
+      alert("May error sa pag-fetch ng TikTok link.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDownload = async (mediaUrl: string, type: "video" | "audio") => {
+  const handleDirectDownload = (mediaUrl: string, type: "video" | "audio") => {
     if (!mediaUrl) return;
     setDownloadingType(type);
 
-    try {
-      const proxyUrl = `/api/download?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
-      const response = await fetch(proxyUrl);
-      
-      if (!response.ok) throw new Error("Download proxy failed");
-
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `tiktok-${type}-${Date.now()}.${type === "audio" ? "mp3" : "mp4"}`;
-      document.body.appendChild(a);
-      a.click();
-
+    // Direct stream download URL
+    const downloadEndpoint = `/api/download?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
+    
+    // Create direct hidden download anchor
+    const a = document.createElement("a");
+    a.href = downloadEndpoint;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    
+    setTimeout(() => {
       a.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error("Direct download fallback triggered:", err);
-      // Fallback direct trigger
-      const a = document.createElement("a");
-      a.href = mediaUrl;
-      a.download = `tiktok-${type}-${Date.now()}.${type === "audio" ? "mp3" : "mp4"}`;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } finally {
       setDownloadingType(null);
-    }
+    }, 2000);
   };
 
   return (
@@ -104,7 +88,7 @@ export default function Home() {
           <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
             {videoUrl && (
               <button
-                onClick={() => handleDownload(videoUrl, "video")}
+                onClick={() => handleDirectDownload(videoUrl, "video")}
                 disabled={downloadingType !== null}
                 className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
               >
@@ -114,7 +98,7 @@ export default function Home() {
 
             {audioUrl && (
               <button
-                onClick={() => handleDownload(audioUrl, "audio")}
+                onClick={() => handleDirectDownload(audioUrl, "audio")}
                 disabled={downloadingType !== null}
                 className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
               >
