@@ -476,7 +476,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* REMOVE BACKGROUND CARD WITH LOADING SPINNER */}
+                {/* REMOVE BACKGROUND CARD (Tinanggal ang version badge) */}
                 <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -487,7 +487,6 @@ export default function Home() {
                           <span className="text-xs text-gray-400">AI Matting & Background Removal</span>
                         </div>
                       </div>
-                      <span className="bg-[#283823] text-[#73ee98] text-[10px] font-bold px-2 py-1 rounded-md border border-[#354f2f]">1.3.8</span>
                     </div>
 
                     <label className={`border-2 border-dashed border-[#354f2f] hover:border-[#73ee98] bg-[#141812] hover:bg-[#182016] transition-all rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer mb-4 block group ${loadingBg ? "pointer-events-none opacity-80" : ""}`}>
@@ -548,7 +547,7 @@ export default function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                {/* GCASH DONATION CARD (Walang slash sa src) */}
+                {/* GCASH DONATION CARD */}
                 <div className="bg-[#1c231a] border border-[#2a3627] hover:border-[#007dfc] transition-all rounded-[28px] p-6 flex flex-col justify-between shadow-lg group">
                   <div>
                     <div className="flex items-center gap-3 mb-4">
