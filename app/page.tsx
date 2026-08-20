@@ -1,84 +1,101 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
-import { Music, Video, Loader2 } from "lucide-react";
 
 export default function Home() {
   const [url, setUrl] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState(false);
 
-  const handleDownload = async (e: React.FormEvent) => {
+  const handleProcess = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!url) return;
     setLoading(true);
-    setError("");
-    setResult(null);
+    setDownloadUrl("");
 
     try {
-      const res = await axios.post("/api/tiktok", { url });
-      setResult(res.data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "An error occurred while processing the request.");
+      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+
+      if (data.downloadUrl) {
+        setDownloadUrl(data.downloadUrl);
+      } else {
+        alert("Hindi makuha ang video link.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("May error sa pag-fetch ng TikTok video.");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <main className="min-h-screen bg-[#0f120e] text-white p-6 flex flex-col items-center justify-center">
-      <div className="max-w-xl w-full bg-[#1a1f16] border border-[#2d3824] rounded-2xl p-8 shadow-xl">
-        <h1 className="text-3xl font-bold text-center mb-2 text-[#86efac]">
-          TikTok Downloader & Audio Extractor
-        </h1>
-        <p className="text-gray-400 text-center text-sm mb-6">
-          100% Free, Clean, & Ad-Free Downloader
-        </p>
+  // DIRECT DOWNLOAD TRIGGER (WALANG NEW TAB)
+  const handleDirectDownload = async () => {
+    if (!downloadUrl) return;
+    setDownloading(true);
 
-        <form onSubmit={handleDownload} className="flex flex-col gap-4">
+    try {
+      // 1. Hihingin sa sariling server ang file
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error("Download failed");
+
+      // 2. Gagawing Blob/File Object sa memory ng browser
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      // 3. Pipilitin ang browser na i-save ang file nang WALANG BINUBUKSANG NEW TAB
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "tiktok-video.mp4";
+      document.body.appendChild(a);
+      a.click();
+
+      // 4. Cleanup
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error(err);
+      alert("Error sa pag-download ng file.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-900 text-white">
+      <div className="max-w-md w-full bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 text-center">
+        <h1 className="text-3xl font-bold mb-6 text-green-400">
+          TikTok Downloader
+        </h1>
+
+        <form onSubmit={handleProcess} className="space-y-4">
           <input
             type="text"
             placeholder="Paste TikTok link here..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="w-full bg-[#0f120e] border border-[#2d3824] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#86efac]"
-            required
+            className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-green-500"
           />
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-[#2e3d1d] hover:bg-[#3d5227] text-[#86efac] font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition"
           >
-            {loading ? <Loader2 className="animate-spin" /> : "Get Download Links"}
+            {loading ? "Processing..." : "Get Video"}
           </button>
         </form>
 
-        {error && <p className="text-red-400 text-sm mt-4 text-center">{error}</p>}
-
-        {result && (
-          <div className="mt-6 p-4 bg-[#0f120e] border border-[#2d3824] rounded-xl flex flex-col items-center gap-4">
-            <img src={result.cover} alt="Thumbnail" className="w-32 h-32 object-cover rounded-lg" />
-            <p className="text-sm font-medium text-center line-clamp-2">{result.title}</p>
-            
-            <div className="flex gap-4 w-full">
-              <a
-                href={result.videoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-[#86efac] text-black font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm hover:opacity-90"
-              >
-                <Video size={16} /> Download Video
-              </a>
-              <a
-                href={result.musicUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-[#2d3824] text-[#86efac] font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 text-sm hover:bg-[#3d5227]"
-              >
-                <Music size={16} /> Download Audio (MP3)
-              </a>
-            </div>
+        {downloadUrl && (
+          <div className="mt-6 pt-6 border-t border-gray-700">
+            <button
+              onClick={handleDirectDownload}
+              disabled={downloading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-3 rounded-lg transition"
+            >
+              {downloading ? "Downloading File..." : "Direct Download MP4"}
+            </button>
           </div>
         )}
       </div>

@@ -1,28 +1,31 @@
-import { NextResponse } from "next/server";
-import axios from "axios";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const targetUrl = searchParams.get("url");
+
+  if (!targetUrl) {
+    return NextResponse.json({ error: "URL is required" }, { status: 400 });
+  }
+
   try {
-    const { url } = await req.json();
+    // Dito ginagawa ang pag-fetch sa totoong TikTok video link
+    // Palitan ang URL ng totoong external API na ginagamit mo kung mayroon
+    const apiUrl = `https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl)}`;
+    const res = await fetch(apiUrl);
+    const data = await res.json();
 
-    if (!url) {
-      return NextResponse.json({ error: "Please provide a TikTok link." }, { status: 400 });
+    const rawVideoUrl = data.video?.noWatermark || data.url;
+
+    if (!rawVideoUrl) {
+      return NextResponse.json({ error: "Video URL not found" }, { status: 404 });
     }
 
-    const response = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
-    const data = response.data.data;
+    // DIRECT PROXY LINK: Dito natin pinapadaan sa Proxy Route
+    const directProxyUrl = `/api/download?url=${encodeURIComponent(rawVideoUrl)}`;
 
-    if (!data) {
-      return NextResponse.json({ error: "Video not found. Please make sure the link is correct." }, { status: 400 });
-    }
-
-    return NextResponse.json({
-      title: data.title,
-      cover: data.cover,
-      videoUrl: data.play,
-      musicUrl: data.music,
-    });
-  } catch (error) {
-    return NextResponse.json({ error: "An error occurred while processing the link." }, { status: 500 });
+    return NextResponse.json({ downloadUrl: directProxyUrl });
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to fetch TikTok data" }, { status: 500 });
   }
 }
