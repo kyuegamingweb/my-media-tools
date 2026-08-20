@@ -113,9 +113,10 @@ export default function Home() {
           {activeTab === "social" && (
             <div>
               <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">Social Platforms</h1>
-              <p className="text-gray-400 text-sm mb-8">Pumili ng social media platform na gusto mong i-download:</p>
+              <p className="text-gray-400 text-sm mb-8">Pumili ng social media card o tool na gusto mong buksan:</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* TikTok Tool Card */}
                 <div 
                   onClick={() => handleTabChange("tools")}
                   className="bg-[#1c231a] border border-[#2a3627] hover:border-[#73ee98] transition-all duration-300 ease-out cursor-pointer rounded-[28px] p-6 flex flex-col justify-between shadow-lg group hover:-translate-y-1 active:scale-98"
@@ -130,14 +131,33 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="bg-[#1c231a]/50 border border-[#2a3627]/50 rounded-[28px] p-6 flex flex-col justify-between opacity-60">
+                {/* Instagram Profile Card */}
+                <a
+                  href="https://www.instagram.com/vxjyue"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#1c231a] border border-[#2a3627] hover:border-[#e1306c] transition-all duration-300 ease-out cursor-pointer rounded-[28px] p-6 flex flex-col justify-between shadow-lg group hover:-translate-y-1 active:scale-98"
+                >
                   <div>
-                    <div className="text-2xl mb-2">📸</div>
-                    <h2 className="text-lg font-bold text-white">Instagram Tools</h2>
-                    <p className="text-xs text-gray-400 mt-1">Reels & Post downloader (Coming Soon).</p>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-[#e1306c]/10 border border-[#e1306c]/30 flex items-center justify-center text-lg text-[#e1306c] font-bold">
+                        📸
+                      </div>
+                      <div>
+                        <h2 className="text-base font-bold text-white group-hover:text-[#e1306c] transition-colors">vxjyue</h2>
+                        <span className="text-xs text-gray-400">jyue • love music &lt;3</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 text-xs text-gray-300 mt-3 pt-3 border-t border-[#2a3627]">
+                      <div><strong className="text-white">3</strong> posts</div>
+                      <div><strong className="text-white">112</strong> followers</div>
+                      <div><strong className="text-white">114</strong> following</div>
+                    </div>
                   </div>
-                  <div className="mt-6 text-xs text-gray-500 font-semibold">Soon</div>
-                </div>
+                  <div className="mt-6 text-xs text-[#e1306c] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    Visit Instagram Profile ↗
+                  </div>
+                </a>
               </div>
             </div>
           )}
