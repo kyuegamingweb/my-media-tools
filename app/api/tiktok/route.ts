@@ -14,11 +14,12 @@ export async function GET(request: NextRequest) {
 
     if (result.code === 0 && result.data) {
       const playUrl = result.data.play || result.data.wmplay;
-      const musicUrl = result.data.music; // Audio link
+      // Kukunin ang audio link kahit saan ito nakatago sa JSON
+      const musicUrl = result.data.music || result.data.music_info?.play;
 
       return NextResponse.json({ 
         downloadUrl: playUrl,
-        audioUrl: musicUrl 
+        audioUrl: musicUrl || playUrl // Fallback sa video kung walang hiwalay na audio
       });
     } else {
       return NextResponse.json({ error: "Video not found" }, { status: 404 });
