@@ -5,65 +5,45 @@ export async function GET(request: NextRequest) {
   const targetUrl = searchParams.get("url");
 
   if (!targetUrl) {
-    return NextResponse.json({ error: "URL is required" }, { status: 400 });
+    return NextResponse.json({ error: "Kailangan ng TikTok URL" }, { status: 400 });
   }
 
+  // Scraper 1: TikWM Primary Engine
   try {
-    // Call Cobalt API for MP4 Video
-    const videoRes = await fetch("https://api.cobalt.tools/api/json", {
-      method: "POST",
+    const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl.trim())}`, {
       headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
       },
-      body: JSON.stringify({
-        url: targetUrl.trim(),
-        videoQuality: "max",
-      }),
+      cache: "no-store",
     });
+    const result = await res.json();
 
-    const videoData = await videoRes.json();
-
-    // Call Cobalt API for MP3 Audio
-    const audioRes = await fetch("https://api.cobalt.tools/api/json", {
-      method: "POST",
-      headers: {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: targetUrl.trim(),
-        downloadMode: "audio",
-        audioFormat: "mp3",
-      }),
-    });
-
-    const audioData = await audioRes.json();
-
-    const videoUrl = videoData.url || videoData.picker?.[0]?.url;
-    const audioUrl = audioData.url || videoUrl;
-
-    if (videoUrl) {
-      return NextResponse.json({ videoUrl, audioUrl });
-    }
-  } catch (err) {
-    console.error("Cobalt API primary failed, using fallback...");
-  }
-
-  // Backup Provider (TikWM) if Cobalt is slow
-  try {
-    const resBackup = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl.trim())}`);
-    const backupData = await resBackup.json();
-
-    if (backupData.code === 0 && backupData.data) {
+    if (result.code === 0 && result.data) {
       return NextResponse.json({
-        videoUrl: backupData.data.play || backupData.data.wmplay,
-        audioUrl: backupData.data.music || backupData.data.play,
+        videoUrl: result.data.play || result.data.wmplay,
+        audioUrl: result.data.music || result.data.music_info?.play || result.data.play,
       });
     }
   } catch (e) {
-    console.error("Fallback failed");
+    console.error("Engine 1 Error");
   }
 
-  return NextResponse.json({ error: "Hindi makuha ang link. Paki-check ang TikTok URL." }, { status: 400 });
+  // Scraper 2: Tiklydown Backup Engine
+  try {
+    const res2 = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl.trim())}`, {
+      cache: "no-store",
+    });
+    const result2 = await res2.json();
+
+    if (result2.video?.noWatermark) {
+      return NextResponse.json({
+        videoUrl: result2.video.noWatermark,
+        audioUrl: result2.music?.play_url || result2.video.noWatermark,
+      });
+    }
+  } catch (e) {
+    console.error("Engine 2 Error");
+  }
+
+  return NextResponse.json({ error: "Hindi makuha ang link. Siguraduhing pampublikong TikTok video ito." }, { status: 400 });
 }
