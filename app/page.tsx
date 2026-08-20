@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { removeBackground } from "@imgly/background-removal";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"social" | "tools">("social");
@@ -21,6 +22,10 @@ export default function Home() {
   const [audioInputUrl, setAudioInputUrl] = useState("");
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [resultAudioUrl, setResultAudioUrl] = useState("");
+
+  // States para sa Remove Background
+  const [loadingBg, setLoadingBg] = useState(false);
+  const [resultBgImage, setResultBgImage] = useState("");
 
   const [downloading, setDownloading] = useState(false);
 
@@ -100,8 +105,25 @@ export default function Home() {
     }
   };
 
+  // Handler para sa Remove Background
+  const handleRemoveBackground = async (file: File) => {
+    if (!file) return;
+    setLoadingBg(true);
+    setResultBgImage("");
+
+    try {
+      const blob = await removeBackground(file);
+      const url = URL.createObjectURL(blob);
+      setResultBgImage(url);
+    } catch {
+      alert("May error sa pag-alis ng background.");
+    } finally {
+      setLoadingBg(false);
+    }
+  };
+
   // Direktang pag-download gamit ang Blob
-  const downloadFile = async (targetUrl: string, type: "video" | "audio" | "image", index?: number) => {
+  const downloadFile = async (targetUrl: string, type: "video" | "audio" | "image" | "bg", index?: number) => {
     if (!targetUrl) return;
     setDownloading(true);
 
@@ -112,10 +134,10 @@ export default function Home() {
 
       let ext = "mp4";
       if (type === "audio") ext = "mp3";
-      if (type === "image") ext = "jpg";
+      if (type === "image" || type === "bg") ext = "png";
 
       const suffix = index !== undefined ? `_photo_${index + 1}` : `_${type}`;
-      const filename = `tiktok${suffix}_${Date.now()}.${ext}`;
+      const filename = `kyue${suffix}_${Date.now()}.${ext}`;
 
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -417,6 +439,56 @@ export default function Home() {
                           className="w-full bg-[#1f2d1c] hover:bg-[#283b24] text-[#73ee98] font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-[#2a3d25]"
                         >
                           🎵 {downloading ? "Downloading..." : "Download MP3 Audio"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* REMOVE BACKGROUND CARD (Eksaktong UI na gusto mo) */}
+                <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-[#73ee98] text-xl font-bold bg-[#283823] p-2 rounded-xl">👤-</div>
+                        <div>
+                          <h2 className="text-base font-bold text-white">Remove Background</h2>
+                          <span className="text-xs text-gray-400">AI Matting & Background Removal</span>
+                        </div>
+                      </div>
+                      <span className="bg-[#283823] text-[#73ee98] text-[10px] font-bold px-2 py-1 rounded-md border border-[#354f2f]">1.3.8</span>
+                    </div>
+
+                    {/* Drag & Drop Box */}
+                    <label className="border-2 border-dashed border-[#354f2f] hover:border-[#73ee98] bg-[#141812] hover:bg-[#182016] transition-all rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer mb-4 block">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleRemoveBackground(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <div className="text-2xl mb-2">📁</div>
+                      <p className="text-xs text-gray-300 font-medium">
+                        {loadingBg ? "Processing AI Background Removal..." : "Drag & drop image here or click to select"}
+                      </p>
+                    </label>
+
+                    {resultBgImage && (
+                      <div className="space-y-3 pt-2 border-t border-[#2a3627]">
+                        <p className="text-xs font-semibold text-[#73ee98]">✨ Result (Transparent Background):</p>
+                        <div className="bg-[#141812] border border-[#2a3627] rounded-xl p-2 flex justify-center">
+                          <img src={resultBgImage} alt="No Background" className="max-h-32 object-contain rounded-lg bg-[linear-gradient(45deg,#222_25%,transparent_25%),linear-gradient(-45deg,#222_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#222_75%),linear-gradient(-45deg,transparent_75%,#222_75%)] bg-[size:16px_16px] bg-[position:0_0,0_8px,8px_-8px,-8px_0px]" />
+                        </div>
+                        <button 
+                          disabled={downloading}
+                          onClick={() => downloadFile(resultBgImage, "bg")}
+                          className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-[#3e5837]"
+                        >
+                          ⬇ {downloading ? "Downloading..." : "Download Transparent PNG"}
                         </button>
                       </div>
                     )}
