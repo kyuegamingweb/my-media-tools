@@ -5,13 +5,24 @@ import { useState } from "react";
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"social" | "tools">("tools");
   const [isAnimating, setIsAnimating] = useState(false);
-  
-  // TikTok Downloader State
-  const [tiktokUrl, setTiktokUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  // Card 1: Video Downloader State
+  const [videoInputUrl, setVideoInputUrl] = useState("");
+  const [loadingVideo, setLoadingVideo] = useState(false);
+  const [resultVideoUrl, setResultVideoUrl] = useState("");
+
+  // Card 2: Photo Downloader State
+  const [photoInputUrl, setPhotoInputUrl] = useState("");
+  const [loadingPhoto, setLoadingPhoto] = useState(false);
+  const [resultImages, setResultImages] = useState<string[]>([]);
+
+  // Card 3: Audio Extractor State
+  const [audioInputUrl, setAudioInputUrl] = useState("");
+  const [loadingAudio, setLoadingAudio] = useState(false);
+  const [resultAudioUrl, setResultAudioUrl] = useState("");
+
+  // Common Download State
   const [downloading, setDownloading] = useState(false);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [audioUrl, setAudioUrl] = useState("");
 
   const handleTabChange = (tab: "social" | "tools") => {
     if (tab === activeTab) return;
@@ -19,34 +30,80 @@ export default function Home() {
     setTimeout(() => {
       setActiveTab(tab);
       setIsAnimating(false);
-    }, 150); // Fluid iOS transition timing
+    }, 150);
   };
 
-  const handleTikTokSubmit = async (e: React.FormEvent) => {
+  // Handler 1: TikTok Video Downloader
+  const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tiktokUrl) return;
-    setLoading(true);
-    setVideoUrl("");
-    setAudioUrl("");
+    if (!videoInputUrl) return;
+    setLoadingVideo(true);
+    setResultVideoUrl("");
 
     try {
-      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(tiktokUrl.trim())}`);
+      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(videoInputUrl.trim())}`);
       const data = await res.json();
 
       if (data.videoUrl) {
-        setVideoUrl(data.videoUrl);
-        setAudioUrl(data.audioUrl || data.videoUrl);
+        setResultVideoUrl(data.videoUrl);
       } else {
-        alert(data.error || "Hindi makuha ang link.");
+        alert(data.error || "Hindi makuha ang video link.");
       }
-    } catch (err) {
-      alert("May error sa pag-fetch ng TikTok link.");
+    } catch {
+      alert("Error sa pag-fetch ng video.");
     } finally {
-      setLoading(false);
+      setLoadingVideo(false);
     }
   };
 
-  const downloadFile = async (targetUrl: string, type: "video" | "audio") => {
+  // Handler 2: TikTok Photo Downloader
+  const handlePhotoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!photoInputUrl) return;
+    setLoadingPhoto(true);
+    setResultImages([]);
+
+    try {
+      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(photoInputUrl.trim())}`);
+      const data = await res.json();
+
+      if (data.type === "image" && data.images?.length > 0) {
+        setResultImages(data.images);
+      } else {
+        alert("Walang nahanap na photo/slideshow sa link na ito.");
+      }
+    } catch {
+      alert("Error sa pag-fetch ng photos.");
+    } finally {
+      setLoadingPhoto(false);
+    }
+  };
+
+  // Handler 3: Audio Extractor
+  const handleAudioSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!audioInputUrl) return;
+    setLoadingAudio(true);
+    setResultAudioUrl("");
+
+    try {
+      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(audioInputUrl.trim())}`);
+      const data = await res.json();
+
+      if (data.audioUrl) {
+        setResultAudioUrl(data.audioUrl);
+      } else {
+        alert(data.error || "Hindi makuha ang audio link.");
+      }
+    } catch {
+      alert("Error sa pag-fetch ng audio.");
+    } finally {
+      setLoadingAudio(false);
+    }
+  };
+
+  // Client-Side Direct Downloader Helper
+  const downloadFile = async (targetUrl: string, type: "video" | "audio" | "image", index?: number) => {
     if (!targetUrl) return;
     setDownloading(true);
 
@@ -55,8 +112,12 @@ export default function Home() {
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
 
-      const ext = type === "audio" ? "mp3" : "mp4";
-      const filename = `tiktok_${type}_${Date.now()}.${ext}`;
+      let ext = "mp4";
+      if (type === "audio") ext = "mp3";
+      if (type === "image") ext = "jpg";
+
+      const suffix = index !== undefined ? `_photo_${index + 1}` : `_${type}`;
+      const filename = `tiktok${suffix}_${Date.now()}.${ext}`;
 
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -66,8 +127,8 @@ export default function Home() {
       document.body.removeChild(link);
 
       window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      window.open(targetUrl, "_self");
+    } catch {
+      window.open(targetUrl, "_blank");
     } finally {
       setDownloading(false);
     }
@@ -103,7 +164,7 @@ export default function Home() {
         </nav>
       </aside>
 
-      {/* Main Content Area with iOS Fluid Animation */}
+      {/* Main Content Area */}
       <main className="flex-1 p-8 bg-[#161a14] rounded-l-[40px] border-l border-[#222a1f] my-3 mr-3 shadow-2xl overflow-y-auto">
         <div 
           className={`transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
@@ -116,22 +177,20 @@ export default function Home() {
               <p className="text-gray-400 text-sm mb-8">Pumili ng social media card o tool na gusto mong buksan:</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* TikTok Tool Card */}
                 <div 
                   onClick={() => handleTabChange("tools")}
                   className="bg-[#1c231a] border border-[#2a3627] hover:border-[#73ee98] transition-all duration-300 ease-out cursor-pointer rounded-[28px] p-6 flex flex-col justify-between shadow-lg group hover:-translate-y-1 active:scale-98"
                 >
                   <div>
                     <div className="text-2xl mb-2">🎵</div>
-                    <h2 className="text-lg font-bold text-white group-hover:text-[#73ee98] transition-colors">TikTok Tools</h2>
-                    <p className="text-xs text-gray-400 mt-1">Download videos without watermark and extract MP3 audio files.</p>
+                    <h2 className="text-lg font-bold text-white group-hover:text-[#73ee98] transition-colors">TikTok Suite Tools</h2>
+                    <p className="text-xs text-gray-400 mt-1">Separate tools for Video, Photo Slides, and MP3 Audio.</p>
                   </div>
                   <div className="mt-6 text-xs text-[#73ee98] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    Open TikTok Downloader →
+                    Open Tools →
                   </div>
                 </div>
 
-                {/* Instagram Profile Card */}
                 <a
                   href="https://www.instagram.com/vxjyue"
                   target="_blank"
@@ -167,68 +226,167 @@ export default function Home() {
               <h1 className="text-3xl font-extrabold text-white mb-8 tracking-tight">Tools</h1>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg transition-transform duration-300">
+                
+                {/* CARD 1: VIDEO DOWNLOADER */}
+                <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
                   <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">HQ</div>
-                        <div>
-                          <h2 className="text-base font-bold text-white">TikTok Downloader</h2>
-                          <span className="text-xs text-gray-400">HQ Media Fetch <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
-                        </div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">HQ</div>
+                      <div>
+                        <h2 className="text-base font-bold text-white">Video Downloader</h2>
+                        <span className="text-xs text-gray-400">TikTok No Watermark <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
                       </div>
                     </div>
 
-                    <form onSubmit={handleTikTokSubmit} className="space-y-4 mb-4">
+                    <form onSubmit={handleVideoSubmit} className="space-y-4 mb-4">
                       <div className="bg-[#141812] border border-[#283525] focus-within:border-[#73ee98] focus-within:ring-2 focus-within:ring-[#73ee98]/20 rounded-2xl p-3 flex items-center gap-2 transition-all">
-                        <span className="text-gray-500 pl-2 text-sm">🔗</span>
+                        <span className="text-gray-500 pl-2 text-sm">🎬</span>
                         <input 
                           type="text" 
-                          placeholder="Paste TikTok link here..." 
-                          value={tiktokUrl}
-                          onChange={(e) => setTiktokUrl(e.target.value)}
+                          placeholder="Paste TikTok video link..." 
+                          value={videoInputUrl}
+                          onChange={(e) => setVideoInputUrl(e.target.value)}
                           className="w-full bg-transparent text-xs text-white focus:outline-none placeholder-gray-500"
                         />
                       </div>
 
                       <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loadingVideo}
                         className="w-full bg-[#2d3f28] hover:bg-[#385032] active:scale-98 text-[#73ee98] font-bold py-3.5 rounded-xl transition-all duration-200 text-xs border border-[#3e5837] shadow disabled:opacity-50"
                       >
-                        {loading ? "Processing..." : "Extract Media"}
+                        {loadingVideo ? "Processing..." : "Extract Video"}
                       </button>
                     </form>
 
-                    {(videoUrl || audioUrl) && (
-                      <div className="space-y-2 pt-2 border-t border-[#2a3627] animate-fadeIn">
-                        {videoUrl && (
-                          <button 
-                            disabled={downloading}
-                            onClick={() => downloadFile(videoUrl, "video")}
-                            className="w-full bg-[#354f2f] hover:bg-[#41623a] active:scale-98 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
-                          >
-                            🎬 {downloading ? "Downloading..." : "Download MP4 Video"}
-                          </button>
-                        )}
-                        {audioUrl && (
-                          <button 
-                            disabled={downloading}
-                            onClick={() => downloadFile(audioUrl, "audio")}
-                            className="w-full bg-[#1f2d1c] hover:bg-[#283b24] active:scale-98 text-[#73ee98] font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-[#2a3d25] disabled:opacity-50 transition-all"
-                          >
-                            🎵 {downloading ? "Downloading..." : "Download MP3 Audio"}
-                          </button>
-                        )}
+                    {resultVideoUrl && (
+                      <div className="pt-2 border-t border-[#2a3627]">
+                        <button 
+                          disabled={downloading}
+                          onClick={() => downloadFile(resultVideoUrl, "video")}
+                          className="w-full bg-[#354f2f] hover:bg-[#41623a] active:scale-98 text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
+                        >
+                          🎬 {downloading ? "Downloading..." : "Download MP4 Video"}
+                        </button>
                       </div>
                     )}
                   </div>
 
                   <div className="mt-6 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
                     <span className="text-[#73ee98] font-bold">ℹ</span>
-                    <span>Restructures MP4 container metadata directly without compression.</span>
+                    <span>Direct pass-through MP4 container metadata extraction.</span>
                   </div>
                 </div>
+
+                {/* CARD 2: PHOTO DOWNLOADER */}
+                <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
+                  <div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">🖼</div>
+                      <div>
+                        <h2 className="text-base font-bold text-white">Photo Downloader</h2>
+                        <span className="text-xs text-gray-400">TikTok Slideshow Photos <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handlePhotoSubmit} className="space-y-4 mb-4">
+                      <div className="bg-[#141812] border border-[#283525] focus-within:border-[#73ee98] focus-within:ring-2 focus-within:ring-[#73ee98]/20 rounded-2xl p-3 flex items-center gap-2 transition-all">
+                        <span className="text-gray-500 pl-2 text-sm">📸</span>
+                        <input 
+                          type="text" 
+                          placeholder="Paste TikTok photo link..." 
+                          value={photoInputUrl}
+                          onChange={(e) => setPhotoInputUrl(e.target.value)}
+                          className="w-full bg-transparent text-xs text-white focus:outline-none placeholder-gray-500"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loadingPhoto}
+                        className="w-full bg-[#2d3f28] hover:bg-[#385032] active:scale-98 text-[#73ee98] font-bold py-3.5 rounded-xl transition-all duration-200 text-xs border border-[#3e5837] shadow disabled:opacity-50"
+                      >
+                        {loadingPhoto ? "Processing..." : "Extract Photos"}
+                      </button>
+                    </form>
+
+                    {resultImages.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-[#2a3627]">
+                        <p className="text-xs font-semibold text-[#73ee98]">🖼 {resultImages.length} Photos Found:</p>
+                        <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-1">
+                          {resultImages.map((imgUrl, idx) => (
+                            <div key={idx} className="relative group rounded-lg overflow-hidden border border-[#2a3627]">
+                              <img src={imgUrl} alt={`Photo ${idx + 1}`} className="w-full h-14 object-cover" />
+                              <button
+                                onClick={() => downloadFile(imgUrl, "image", idx)}
+                                className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-[10px] text-white font-bold"
+                              >
+                                Save ⬇
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
+                    <span className="text-[#73ee98] font-bold">ℹ</span>
+                    <span>Extracts full resolution original image files from TikTok.</span>
+                  </div>
+                </div>
+
+                {/* CARD 3: AUDIO EXTRACTOR */}
+                <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
+                  <div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">🎵</div>
+                      <div>
+                        <h2 className="text-base font-bold text-white">Audio Extractor</h2>
+                        <span className="text-xs text-gray-400">TikTok to MP3 <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleAudioSubmit} className="space-y-4 mb-4">
+                      <div className="bg-[#141812] border border-[#283525] focus-within:border-[#73ee98] focus-within:ring-2 focus-within:ring-[#73ee98]/20 rounded-2xl p-3 flex items-center gap-2 transition-all">
+                        <span className="text-gray-500 pl-2 text-sm">🎙</span>
+                        <input 
+                          type="text" 
+                          placeholder="Paste TikTok link for audio..." 
+                          value={audioInputUrl}
+                          onChange={(e) => setAudioInputUrl(e.target.value)}
+                          className="w-full bg-transparent text-xs text-white focus:outline-none placeholder-gray-500"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loadingAudio}
+                        className="w-full bg-[#2d3f28] hover:bg-[#385032] active:scale-98 text-[#73ee98] font-bold py-3.5 rounded-xl transition-all duration-200 text-xs border border-[#3e5837] shadow disabled:opacity-50"
+                      >
+                        {loadingAudio ? "Processing..." : "Extract MP3 Audio"}
+                      </button>
+                    </form>
+
+                    {resultAudioUrl && (
+                      <div className="pt-2 border-t border-[#2a3627]">
+                        <button 
+                          disabled={downloading}
+                          onClick={() => downloadFile(resultAudioUrl, "audio")}
+                          className="w-full bg-[#1f2d1c] hover:bg-[#283b24] active:scale-98 text-[#73ee98] font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-[#2a3d25] disabled:opacity-50 transition-all"
+                        >
+                          🎵 {downloading ? "Downloading..." : "Download MP3 Audio"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
+                    <span className="text-[#73ee98] font-bold">ℹ</span>
+                    <span>Extracts high quality audio stream directly from TikTok media.</span>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
