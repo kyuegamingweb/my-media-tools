@@ -684,13 +684,13 @@ export default function Home() {
               <div className="text-center">
                 <p className="text-xs text-gray-400 mb-1">GCash Number:</p>
                 <p className="text-lg font-bold text-[#73ee98]">{gcashNumber}</p>
+                <button 
+                  onClick={handleCopyGcash}
+                  className="mt-2 text-xs text-gray-400 hover:text-white underline"
+                >
+                  {copied ? "Copied!" : "Click to copy number"}
+                </button>
               </div>
-              <button 
-                onClick={handleCopyGcash}
-                className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-2.5 rounded-xl text-xs font-bold transition"
-              >
-                {copied ? "Copied to Clipboard!" : "Copy GCash Number"}
-              </button>
             </div>
           </div>
         )}
