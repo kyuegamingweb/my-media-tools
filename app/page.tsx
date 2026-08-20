@@ -21,39 +21,39 @@ export default function Home() {
       if (data.downloadUrl) {
         setVideoUrl(data.downloadUrl);
       } else {
-        alert("Hindi makuha ang video link. Siguraduhing tama ang TikTok URL.");
+        alert("Hindi makuha ang video link.");
       }
     } catch (err) {
       console.error(err);
-      alert("May error sa pag-fetch ng TikTok link.");
+      alert("Error sa pag-fetch ng TikTok link.");
     } finally {
       setLoading(false);
     }
   };
 
-  // DIRECT FILE DOWNLOAD VIA PROXY BLOB
-  const handleForceDownload = async () => {
+  const handleDownload = async () => {
     if (!videoUrl) return;
     setDownloading(true);
 
     try {
-      // Gagamit ng proxy para ma-bypass ang CORS at mapilit ang browser na mag-download
-      const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(videoUrl)}`;
-      const response = await fetch(corsProxyUrl);
+      const proxyUrl = `/api/download?url=${encodeURIComponent(videoUrl)}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error("Download failed");
+
       const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
 
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `tiktok-video-${Date.now()}.mp4`;
-      document.body.appendChild(link);
-      link.click();
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `tiktok-video-${Date.now()}.mp4`;
+      document.body.appendChild(a);
+      a.click();
 
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error("Download error:", error);
-      alert("Hindi ma-download ang file. Subukan muli.");
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error(err);
+      alert("May error sa pag-download ng file.");
     } finally {
       setDownloading(false);
     }
@@ -92,11 +92,11 @@ export default function Home() {
         {videoUrl && (
           <div className="mt-6 pt-6 border-t border-[#232b20]">
             <button
-              onClick={handleForceDownload}
+              onClick={handleDownload}
               disabled={downloading}
               className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
             >
-              {downloading ? "Downloading File..." : "⚡ Direct Download MP4"}
+              {downloading ? "Downloading MP4..." : "⚡ Direct Download MP4"}
             </button>
           </div>
         )}

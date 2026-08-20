@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Kinukuha ang video buffer sa server side para maipasa bilang file download
     const response = await fetch(videoUrl, {
       headers: {
         "User-Agent":
@@ -18,13 +17,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!response.ok) {
-      return NextResponse.json({ error: "Failed to fetch video" }, { status: 500 });
-    }
+    if (!response.ok) throw new Error("Failed to fetch stream");
 
-    const videoBuffer = await response.arrayBuffer();
+    const arrayBuffer = await response.arrayBuffer();
 
-    return new NextResponse(videoBuffer, {
+    return new NextResponse(arrayBuffer, {
       status: 200,
       headers: {
         "Content-Type": "video/mp4",
@@ -34,6 +31,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Download Error:", error);
-    return NextResponse.json({ error: "Server error during download" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to download" }, { status: 500 });
   }
 }
