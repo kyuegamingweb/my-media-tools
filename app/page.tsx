@@ -201,7 +201,7 @@ export default function Home() {
           {activeTab === "social" && (
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-2 tracking-tight">Social Platforms</h1>
-              <p className="text-gray-400 text-sm mb-8">Pumili ng social media card o tool na gusto mong buksan:</p>
+              <p className="text-gray-400 text-sm mb-8">Select a social media card or tool you want to open:</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div 
