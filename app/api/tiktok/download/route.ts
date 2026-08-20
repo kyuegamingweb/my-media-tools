@@ -13,27 +13,22 @@ export async function GET(request: NextRequest) {
     const response = await fetch(mediaUrl, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Referer: "https://www.tiktok.com/",
       },
     });
 
-    if (!response.ok || !response.body) {
-      throw new Error("Stream fetch failed");
-    }
+    if (!response.ok) throw new Error("Failed to fetch stream");
 
     const isAudio = type === "audio";
     const extension = isAudio ? "mp3" : "mp4";
     const contentType = isAudio ? "audio/mpeg" : "video/mp4";
-    const filename = `tiktok-${type}-${Date.now()}.${extension}`;
 
-    // Pass the stream directly to force "Save File" dialog
-    return new NextResponse(response.body as ReadableStream, {
+    return new NextResponse(response.body, {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Access-Control-Allow-Origin": "*",
+        "Content-Disposition": `attachment; filename="tiktok-${type}-${Date.now()}.${extension}"`,
         "Cache-Control": "no-cache",
       },
     });
