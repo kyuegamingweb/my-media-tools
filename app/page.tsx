@@ -8,6 +8,7 @@ export default function Home() {
   // TikTok Downloader State
   const [tiktokUrl, setTiktokUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
 
@@ -35,15 +36,33 @@ export default function Home() {
     }
   };
 
-  const triggerDownload = (mediaUrl: string, type: "video" | "audio") => {
-    if (!mediaUrl) return;
-    const streamEndpoint = `/api/stream?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
-    const a = document.createElement("a");
-    a.href = streamEndpoint;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  // 100% Client-Side Direct Download (No Route Proxies, No 404s, No Redirects)
+  const downloadFile = async (targetUrl: string, type: "video" | "audio") => {
+    if (!targetUrl) return;
+    setDownloading(true);
+
+    try {
+      const response = await fetch(targetUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const ext = type === "audio" ? "mp3" : "mp4";
+      const filename = `tiktok_${type}_${Date.now()}.${ext}`;
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      // Fallback kung blocked ng CORS ang CDN
+      window.open(targetUrl, "_self");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -89,7 +108,7 @@ export default function Home() {
       <main className="flex-1 p-8 bg-[#161a14] rounded-l-[40px] border-l border-[#222a1f] my-3 mr-3 shadow-2xl overflow-y-auto">
         <h1 className="text-3xl font-extrabold text-white mb-8 tracking-tight">Tools</h1>
 
-        {/* Tools Cards Grid - TikTok Downloader Only */}
+        {/* Tools Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
@@ -119,7 +138,7 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-bold py-3.5 rounded-xl transition text-xs border border-[#3e5837] shadow"
+                  className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-bold py-3.5 rounded-xl transition text-xs border border-[#3e5837] shadow disabled:opacity-50"
                 >
                   {loading ? "Processing..." : "Extract Media"}
                 </button>
@@ -129,18 +148,20 @@ export default function Home() {
                 <div className="space-y-2 pt-2 border-t border-[#2a3627]">
                   {videoUrl && (
                     <button 
-                      onClick={() => triggerDownload(videoUrl, "video")}
-                      className="w-full bg-[#354f2f] hover:bg-[#41623a] text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2"
+                      disabled={downloading}
+                      onClick={() => downloadFile(videoUrl, "video")}
+                      className="w-full bg-[#354f2f] hover:bg-[#41623a] text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      🎬 Download MP4 Video
+                      🎬 {downloading ? "Downloading..." : "Download MP4 Video"}
                     </button>
                   )}
                   {audioUrl && (
                     <button 
-                      onClick={() => triggerDownload(audioUrl, "audio")}
-                      className="w-full bg-[#1f2d1c] hover:bg-[#283b24] text-[#73ee98] font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-[#2a3d25]"
+                      disabled={downloading}
+                      onClick={() => downloadFile(audioUrl, "audio")}
+                      className="w-full bg-[#1f2d1c] hover:bg-[#283b24] text-[#73ee98] font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-[#2a3d25] disabled:opacity-50"
                     >
-                      🎵 Download MP3 Audio
+                      🎵 {downloading ? "Downloading..." : "Download MP3 Audio"}
                     </button>
                   )}
                 </div>
