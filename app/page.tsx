@@ -290,19 +290,19 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#111410] text-[#e2e8f0] font-sans">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#111410] text-[#e2e8f0] font-sans">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-[#111410] p-6 border-r border-[#1e251c]">
-        <div className="text-xl font-bold text-[#73ee98] mb-8">KYUE TOOLS</div>
-        <nav className="flex flex-col gap-2">
-          <button onClick={() => setActiveTab("social")} className={`px-4 py-3 rounded-2xl text-left font-medium ${activeTab === "social" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}>🌐 Social</button>
-          <button onClick={() => setActiveTab("tools")} className={`px-4 py-3 rounded-2xl text-left font-medium ${activeTab === "tools" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}>🛠 Tools</button>
-          <button onClick={() => setActiveTab("donation")} className={`px-4 py-3 rounded-2xl text-left font-medium ${activeTab === "donation" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}>💳 Donation</button>
+      <aside className="w-full md:w-64 bg-[#111410] p-6 border-b md:border-b-0 md:border-r border-[#1e251c]">
+        <div className="text-xl font-bold text-[#73ee98] mb-4 md:mb-8">KYUE TOOLS</div>
+        <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto">
+          <button onClick={() => setActiveTab("social")} className={`px-4 py-3 rounded-2xl text-left font-medium whitespace-nowrap ${activeTab === "social" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}>🌐 Social</button>
+          <button onClick={() => setActiveTab("tools")} className={`px-4 py-3 rounded-2xl text-left font-medium whitespace-nowrap ${activeTab === "tools" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}>🛠 Tools</button>
+          <button onClick={() => setActiveTab("donation")} className={`px-4 py-3 rounded-2xl text-left font-medium whitespace-nowrap ${activeTab === "donation" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}>💳 Donation</button>
         </nav>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 p-10">
+      <main className="flex-1 p-6 md:p-10">
         {activeTab === "tools" && (
           <div>
             <h1 className="text-2xl font-bold text-white mb-6">Tools</h1>
