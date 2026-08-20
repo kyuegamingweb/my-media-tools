@@ -34,29 +34,55 @@ export default function Home() {
     }
   };
 
+  const forceDownloadBlob = async (targetUrl: string, filename: string) => {
+    // Attempt 1: Route Proxy
+    try {
+      const proxyUrl = `/api/download?url=${encodeURIComponent(targetUrl)}`;
+      const res = await fetch(proxyUrl);
+      if (res.ok) {
+        const blob = await res.blob();
+        return blob;
+      }
+    } catch (e) {
+      console.log("Route proxy failed, trying CORS proxy fallback...");
+    }
+
+    // Attempt 2: Public CORS Proxy Fallback
+    const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+    const res = await fetch(corsProxyUrl);
+    if (!res.ok) throw new Error("Failed to fetch stream");
+    return await res.blob();
+  };
+
   const handleDownload = async (mediaUrl: string, type: "video" | "audio") => {
     if (!mediaUrl) return;
     setDownloadingType(type);
 
-    try {
-      const proxyUrl = `/api/download?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Download failed");
+    const ext = type === "audio" ? "mp3" : "mp4";
+    const filename = `tiktok-${type}-${Date.now()}.${ext}`;
 
-      const blob = await response.blob();
+    try {
+      const blob = await forceDownloadBlob(mediaUrl, filename);
       const blobUrl = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `tiktok-${type}-${Date.now()}.${type === "audio" ? "mp3" : "mp4"}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
 
       a.remove();
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error(err);
-      alert("May error sa pag-download ng file.");
+      console.error("Download Error:", err);
+      // Final Fallback: Direct Anchor Open
+      const a = document.createElement("a");
+      a.href = mediaUrl;
+      a.target = "_blank";
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } finally {
       setDownloadingType(null);
     }
@@ -100,7 +126,7 @@ export default function Home() {
                 disabled={downloadingType !== null}
                 className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
               >
-                {downloadingType === "video" ? "Downloading MP4..." : "⚡ Direct Download MP4"}
+                {downloadingType === "video" ? "Downloading Video..." : "⚡ Download Video (MP4)"}
               </button>
             )}
 
@@ -110,7 +136,7 @@ export default function Home() {
                 disabled={downloadingType !== null}
                 className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
               >
-                {downloadingType === "audio" ? "Downloading MP3..." : "🎵 Direct Download MP3"}
+                {downloadingType === "audio" ? "Downloading Audio..." : "🎵 Download Audio (MP3)"}
               </button>
             )}
           </div>
