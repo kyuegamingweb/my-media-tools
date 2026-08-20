@@ -7,7 +7,6 @@ export default function Home() {
   const [videoUrl, setVideoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [downloadingType, setDownloadingType] = useState<"video" | "audio" | null>(null);
 
   const handleProcess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +23,7 @@ export default function Home() {
         setVideoUrl(data.videoUrl);
         setAudioUrl(data.audioUrl || data.videoUrl);
       } else {
-        alert(data.error || "Hindi makuha ang link.");
+        alert(data.error || "Hindi makuha ang TikTok link.");
       }
     } catch (err) {
       console.error(err);
@@ -34,38 +33,18 @@ export default function Home() {
     }
   };
 
-  const handleDirectDownload = async (mediaUrl: string, type: "video" | "audio") => {
+  const executeDownload = (mediaUrl: string, type: "video" | "audio") => {
     if (!mediaUrl) return;
-    setDownloadingType(type);
-
-    const extension = type === "audio" ? "mp3" : "mp4";
-    const filename = `tiktok-${type}-${Date.now()}.${extension}`;
-
-    try {
-      // Direct browser fetching to bypass server proxy limits
-      const res = await fetch(mediaUrl);
-      const blob = await res.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      // Invisible silent download fallback
-      const a = document.createElement("a");
-      a.href = mediaUrl;
-      a.download = filename;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } finally {
-      setDownloadingType(null);
-    }
+    
+    // Direct stream trigger sa backend route natin
+    const downloadProxyUrl = `/api/download?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
+    
+    const a = document.createElement("a");
+    a.href = downloadProxyUrl;
+    a.download = `tiktok-${type}-${Date.now()}.${type === "audio" ? "mp3" : "mp4"}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   return (
@@ -102,21 +81,19 @@ export default function Home() {
           <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
             {videoUrl && (
               <button
-                onClick={() => handleDirectDownload(videoUrl, "video")}
-                disabled={downloadingType !== null}
-                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
+                onClick={() => executeDownload(videoUrl, "video")}
+                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
               >
-                {downloadingType === "video" ? "Downloading MP4..." : "⚡ Direct Download MP4"}
+                ⚡ Direct Download MP4
               </button>
             )}
 
             {audioUrl && (
               <button
-                onClick={() => handleDirectDownload(audioUrl, "audio")}
-                disabled={downloadingType !== null}
-                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
+                onClick={() => executeDownload(audioUrl, "audio")}
+                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
               >
-                {downloadingType === "audio" ? "Downloading MP3..." : "🎵 Direct Download MP3"}
+                🎵 Direct Download MP3
               </button>
             )}
           </div>
