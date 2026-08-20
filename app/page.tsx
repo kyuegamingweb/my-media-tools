@@ -3,127 +3,225 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [url, setUrl] = useState("");
+  const [activeTab, setActiveTab] = useState("tools");
+  
+  // TikTok Downloader State
+  const [tiktokUrl, setTiktokUrl] = useState("");
+  const [loading, setLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [downloadingType, setDownloadingType] = useState<"video" | "audio" | null>(null);
 
-  const handleProcess = async (e: React.FormEvent) => {
+  // Video Compressor State
+  const [speed, setSpeed] = useState<"Slow" | "Medium" | "Fast">("Medium");
+
+  const handleTikTokSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url) return;
+    if (!tiktokUrl) return;
     setLoading(true);
     setVideoUrl("");
     setAudioUrl("");
 
     try {
-      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(url.trim())}`);
+      const res = await fetch(`/api/tiktok?url=${encodeURIComponent(tiktokUrl.trim())}`);
       const data = await res.json();
 
       if (data.videoUrl) {
         setVideoUrl(data.videoUrl);
         setAudioUrl(data.audioUrl || data.videoUrl);
       } else {
-        alert(data.error || "Hindi makuha ang TikTok link.");
+        alert(data.error || "Hindi makuha ang link.");
       }
     } catch (err) {
-      console.error(err);
       alert("May error sa pag-fetch ng TikTok link.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDownloadFile = async (mediaUrl: string, type: "video" | "audio") => {
+  const triggerDownload = (mediaUrl: string, type: "video" | "audio") => {
     if (!mediaUrl) return;
-    setDownloadingType(type);
-
-    const ext = type === "audio" ? "mp3" : "mp4";
-    const filename = `tiktok-${type}-${Date.now()}.${ext}`;
-
-    try {
-      // Direct binary blob download - Walang Vercel Server Proxy, Walang 404
-      const response = await fetch(mediaUrl);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      // Fallback para sa mga mobile browsers na may strict CORS policy
-      const link = document.createElement("a");
-      link.href = mediaUrl;
-      link.download = filename;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } finally {
-      setDownloadingType(null);
-    }
+    const streamEndpoint = `/api/stream?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
+    const a = document.createElement("a");
+    a.href = streamEndpoint;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#090b08] text-white selection:bg-[#4ade80] selection:text-black">
-      <div className="max-w-md w-full bg-[#121611]/90 backdrop-blur-md p-8 rounded-[32px] border border-[#232b20] text-center shadow-[0_0_50px_-12px_rgba(74,222,128,0.15)] relative overflow-hidden">
-        
-        <h1 className="text-3xl font-extrabold text-[#73ee98] tracking-tight leading-snug mb-2">
-          TikTok <br /> Downloader & <br /> Audio Extractor
-        </h1>
-
-        <p className="text-gray-400 text-sm font-medium mb-8 leading-relaxed">
-          100% Free, Clean, & Ad-Free <br /> Downloader
-        </p>
-
-        <form onSubmit={handleProcess} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Paste TikTok link here..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full px-5 py-4 rounded-2xl bg-[#181f16] text-gray-100 border border-[#283525] focus:outline-none focus:border-[#4ade80] focus:ring-1 focus:ring-[#4ade80] placeholder-gray-500 transition-all duration-200 text-sm"
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#233a1c] hover:bg-[#2c4b24] active:scale-[0.98] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 border border-[#34572a] shadow-lg disabled:opacity-50"
+    <div className="flex min-h-screen bg-[#111410] text-[#e2e8f0] font-sans">
+      {/* Sidebar Navigation */}
+      <aside className="w-64 bg-[#111410] p-6 flex flex-col gap-6 border-r border-[#1e251c]">
+        <div className="text-xl font-bold text-[#73ee98] tracking-wider mb-2">KYUE APPS</div>
+        <nav className="flex flex-col gap-2">
+          <button 
+            onClick={() => setActiveTab("social")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition ${activeTab === "social" ? "bg-[#283823] text-[#73ee98]" : "text-gray-400 hover:text-white hover:bg-[#182016]"}`}
           >
-            {loading ? "Processing..." : "Get Download Links"}
+            🌐 Social
           </button>
-        </form>
+          <button 
+            onClick={() => setActiveTab("preset")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition ${activeTab === "preset" ? "bg-[#283823] text-[#73ee98]" : "text-gray-400 hover:text-white hover:bg-[#182016]"}`}
+          >
+            🎛 Preset
+          </button>
+          <button 
+            onClick={() => setActiveTab("resource")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition ${activeTab === "resource" ? "bg-[#283823] text-[#73ee98]" : "text-gray-400 hover:text-white hover:bg-[#182016]"}`}
+          >
+            📁 Resource
+          </button>
+          <button 
+            onClick={() => setActiveTab("tools")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition ${activeTab === "tools" ? "bg-[#2d3f28] text-[#73ee98] font-semibold shadow-md" : "text-gray-400 hover:text-white hover:bg-[#182016]"}`}
+          >
+            🛠 Tools
+          </button>
+          <button 
+            onClick={() => setActiveTab("contact")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition ${activeTab === "contact" ? "bg-[#283823] text-[#73ee98]" : "text-gray-400 hover:text-white hover:bg-[#182016]"}`}
+          >
+            ✉ Contact Us
+          </button>
+        </nav>
+      </aside>
 
-        {(videoUrl || audioUrl) && (
-          <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
-            {videoUrl && (
-              <button
-                onClick={() => handleDownloadFile(videoUrl, "video")}
-                disabled={downloadingType !== null}
-                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
-              >
-                {downloadingType === "video" ? "Downloading Video..." : "⚡ Download Video (MP4)"}
-              </button>
-            )}
+      {/* Main Content Area */}
+      <main className="flex-1 p-8 bg-[#161a14] rounded-l-[40px] border-l border-[#222a1f] my-3 mr-3 shadow-2xl overflow-y-auto">
+        <h1 className="text-3xl font-extrabold text-white mb-8 tracking-tight">Tools</h1>
 
-            {audioUrl && (
-              <button
-                onClick={() => handleDownloadFile(audioUrl, "audio")}
-                disabled={downloadingType !== null}
-                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
-              >
-                {downloadingType === "audio" ? "Downloading Audio..." : "🎵 Download Audio (MP3)"}
-              </button>
-            )}
+        {/* Tools Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          {/* TOOL 1: TikTok Downloader */}
+          <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">HQ</div>
+                  <div>
+                    <h2 className="text-base font-bold text-white">TikTok Downloader</h2>
+                    <span className="text-xs text-gray-400">HQ Media Fetch <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleTikTokSubmit} className="space-y-4 mb-4">
+                <div className="border-2 border-dashed border-[#2f3d2b] rounded-2xl p-6 text-center bg-[#151a13] hover:border-[#4ade80] transition">
+                  <div className="text-xl mb-1 text-gray-400">📥</div>
+                  <input 
+                    type="text" 
+                    placeholder="Paste TikTok link here..." 
+                    value={tiktokUrl}
+                    onChange={(e) => setTiktokUrl(e.target.value)}
+                    className="w-full bg-transparent text-xs text-center text-white focus:outline-none placeholder-gray-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-bold py-3 rounded-xl transition text-xs border border-[#3e5837] shadow"
+                >
+                  {loading ? "Processing..." : "Extract Media"}
+                </button>
+              </form>
+
+              {(videoUrl || audioUrl) && (
+                <div className="space-y-2 pt-2 border-t border-[#2a3627]">
+                  {videoUrl && (
+                    <button 
+                      onClick={() => triggerDownload(videoUrl, "video")}
+                      className="w-full bg-[#354f2f] hover:bg-[#41623a] text-white font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2"
+                    >
+                      🎬 Download MP4 Video
+                    </button>
+                  )}
+                  {audioUrl && (
+                    <button 
+                      onClick={() => triggerDownload(audioUrl, "audio")}
+                      className="w-full bg-[#1f2d1c] hover:bg-[#283b24] text-[#73ee98] font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 border border-[#2a3d25]"
+                    >
+                      🎵 Download MP3 Audio
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
+              <span className="text-[#73ee98] font-bold">ℹ</span>
+              <span>Restructures MP4 container metadata directly without compression.</span>
+            </div>
           </div>
-        )}
-      </div>
-    </main>
+
+          {/* TOOL 2: Video Compressor */}
+          <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">📹</div>
+                  <div>
+                    <h2 className="text-base font-bold text-white">Video Compressor</h2>
+                    <span className="text-xs text-gray-400">FFmpeg WASM <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-2 border-dashed border-[#2f3d2b] rounded-2xl p-8 text-center bg-[#151a13] cursor-pointer hover:border-[#4ade80] transition mb-4">
+                <div className="text-2xl mb-1 text-gray-400">📄</div>
+                <p className="text-xs text-gray-400">Drag & drop video here or click to select</p>
+              </div>
+
+              <div className="bg-[#151a13] p-1.5 rounded-xl flex gap-1 mb-4 border border-[#242e20]">
+                {(["Slow", "Medium", "Fast"] as const).map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => setSpeed(item)}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${speed === item ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-[#141812] p-3.5 rounded-xl border border-[#232d20] space-y-1.5 text-xs">
+              <div className="text-gray-300 font-medium">⚙ Codec: <span className="text-white">H.264 (libx264)</span></div>
+              <div className="text-gray-300 font-medium">📈 Preset: <span className="text-white">{speed}</span></div>
+              <div className="text-gray-300 font-medium">HQ CRF: <span className="text-[#73ee98]">20 (High Quality)</span></div>
+            </div>
+          </div>
+
+          {/* TOOL 3: Audio Extractor */}
+          <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">🎵</div>
+                  <div>
+                    <h2 className="text-base font-bold text-white">Audio Extractor</h2>
+                    <span className="text-xs text-gray-400">Video to Audio <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-2 border-dashed border-[#2f3d2b] rounded-2xl p-12 text-center bg-[#151a13] cursor-pointer hover:border-[#4ade80] transition">
+                <div className="text-2xl mb-1 text-gray-400">📄</div>
+                <p className="text-xs text-gray-400">Drag & drop video here or click to select</p>
+              </div>
+            </div>
+
+            <div className="mt-4 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
+              <span className="text-[#73ee98] font-bold">ℹ</span>
+              <span>Extract high quality MP3/AAC audio files directly from any local video file.</span>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
   );
 }
