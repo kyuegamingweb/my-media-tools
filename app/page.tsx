@@ -548,7 +548,7 @@ export default function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                {/* GCASH DONATION CARD (May GCash Number na) */}
+                {/* GCASH DONATION CARD (Walang slash sa src) */}
                 <div className="bg-[#1c231a] border border-[#2a3627] hover:border-[#007dfc] transition-all rounded-[28px] p-6 flex flex-col justify-between shadow-lg group">
                   <div>
                     <div className="flex items-center gap-3 mb-4">
@@ -562,7 +562,7 @@ export default function Home() {
                     <div className="bg-[#141812] border border-[#283525] rounded-2xl p-4 text-center space-y-2 mb-4">
                       <div className="flex justify-center mb-2">
                         <img 
-                          src="/gcash-qr.png" 
+                          src="gcash-qr.png" 
                           alt="GCash QR Code" 
                           className="w-28 h-28 object-contain rounded-xl border border-[#2a3627] bg-white p-1" 
                         />
