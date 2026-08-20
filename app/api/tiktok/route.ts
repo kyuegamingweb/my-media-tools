@@ -1,49 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
   const targetUrl = searchParams.get("url");
 
   if (!targetUrl) {
-    return NextResponse.json({ error: "Kailangan ng TikTok URL" }, { status: 400 });
+    return NextResponse.json({ error: "Missing URL" }, { status: 400 });
   }
 
-  // Scraper 1: TikWM Primary Engine
   try {
-    const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl.trim())}`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36",
-      },
-      cache: "no-store",
-    });
-    const result = await res.json();
+    const apiRes = await fetch(
+      `https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl)}`
+    );
 
-    if (result.code === 0 && result.data) {
+    if (!apiRes.ok) {
+      throw new Error("Failed to fetch from TikTok API service");
+    }
+
+    const data = await apiRes.json();
+
+    // 1. Pagsusuri para sa Photo Slideshows
+    let rawImages = data.images || data.image_post_info?.images || data.slider || [];
+    let imageUrls: string[] = [];
+
+    if (Array.isArray(rawImages) && rawImages.length > 0) {
+      imageUrls = rawImages.map((img: any) => {
+        if (typeof img === "string") return img;
+        return img.url || img.url_list?.[0] || img.image_url?.url_list?.[0] || "";
+      }).filter(Boolean);
+    }
+
+    // 2. Pagsusuri para sa Video URL
+    const videoUrl =
+      data.video?.noWatermark ||
+      data.video?.watermark ||
+      data.video?.play_addr?.url_list?.[0] || "";
+
+    // 3. Pagsusuri para sa Audio / MP3 URL
+    const audioUrl =
+      data.music?.play_url ||
+      data.audio?.play_url ||
+      data.music ||
+      "";
+
+    // I-return ang tamang format batay sa kung ano ang nahanap
+    if (imageUrls.length > 0) {
       return NextResponse.json({
-        videoUrl: result.data.play || result.data.wmplay,
-        audioUrl: result.data.music || result.data.music_info?.play || result.data.play,
+        type: "image",
+        images: imageUrls,
+        audioUrl: audioUrl || videoUrl,
       });
     }
-  } catch (e) {
-    console.error("Engine 1 Error");
-  }
 
-  // Scraper 2: Tiklydown Backup Engine
-  try {
-    const res2 = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl.trim())}`, {
-      cache: "no-store",
-    });
-    const result2 = await res2.json();
-
-    if (result2.video?.noWatermark) {
+    if (videoUrl) {
       return NextResponse.json({
-        videoUrl: result2.video.noWatermark,
-        audioUrl: result2.music?.play_url || result2.video.noWatermark,
+        type: "video",
+        videoUrl,
+        audioUrl: audioUrl || videoUrl,
       });
     }
-  } catch (e) {
-    console.error("Engine 2 Error");
-  }
 
-  return NextResponse.json({ error: "Hindi makuha ang link. Siguraduhing pampublikong TikTok video ito." }, { status: 400 });
+    return NextResponse.json({ error: "Walang nahanap na media sa link na ito." }, { status: 404 });
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: "Error fetching media. Pakisubukan muli ang link." },
+      { status: 500 }
+    );
+  }
 }
