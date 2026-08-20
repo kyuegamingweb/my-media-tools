@@ -476,7 +476,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* REMOVE BACKGROUND CARD (Tinanggal ang version badge) */}
+                {/* REMOVE BACKGROUND CARD (Tinanggal ang AI Matting text) */}
                 <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -484,7 +484,7 @@ export default function Home() {
                         <div className="text-[#73ee98] text-xl font-bold bg-[#283823] p-2 rounded-xl">👤-</div>
                         <div>
                           <h2 className="text-base font-bold text-white">Remove Background</h2>
-                          <span className="text-xs text-gray-400">AI Matting & Background Removal</span>
+                          <span className="text-xs text-gray-400">Background Removal</span>
                         </div>
                       </div>
                     </div>
