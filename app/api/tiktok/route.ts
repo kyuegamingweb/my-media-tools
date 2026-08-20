@@ -10,11 +10,11 @@ export async function POST(req: Request) {
     if (data.code === 0) {
       return NextResponse.json({
         success: true,
-        downloadUrl: type === 'audio' ? data.data.music : data.data.play
+        downloadUrl: type === 'audio' ? data.data.music : data.data.play,
       });
     }
     return NextResponse.json({ success: false, error: "Video not found" }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Server Error" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
   }
 }
