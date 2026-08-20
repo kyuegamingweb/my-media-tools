@@ -7,6 +7,7 @@ export default function Home() {
   const [videoUrl, setVideoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloadingType, setDownloadingType] = useState<"video" | "audio" | null>(null);
 
   const handleProcess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,25 +24,50 @@ export default function Home() {
         setVideoUrl(data.downloadUrl);
         setAudioUrl(data.audioUrl || data.downloadUrl);
       } else {
-        alert("Hindi makuha ang link. Subukan ang ibang TikTok link.");
+        alert("Hindi makuha ang link. Pakisiguradong tama ang TikTok link.");
       }
     } catch (err) {
       console.error(err);
-      alert("May error sa pag-fetch ng TikTok link.");
+      alert("Error sa pag-fetch ng TikTok link.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDirectDownload = (mediaUrl: string, filename: string) => {
-    const a = document.createElement("a");
-    a.href = mediaUrl;
-    a.download = filename;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  const handleDownload = async (mediaUrl: string, type: "video" | "audio") => {
+    if (!mediaUrl) return;
+    setDownloadingType(type);
+
+    try {
+      const proxyUrl = `/api/download?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) throw new Error("Download proxy failed");
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `tiktok-${type}-${Date.now()}.${type === "audio" ? "mp3" : "mp4"}`;
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Direct download fallback triggered:", err);
+      // Fallback direct trigger
+      const a = document.createElement("a");
+      a.href = mediaUrl;
+      a.download = `tiktok-${type}-${Date.now()}.${type === "audio" ? "mp3" : "mp4"}`;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } finally {
+      setDownloadingType(null);
+    }
   };
 
   return (
@@ -78,19 +104,21 @@ export default function Home() {
           <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
             {videoUrl && (
               <button
-                onClick={() => handleDirectDownload(videoUrl, `tiktok-video-${Date.now()}.mp4`)}
-                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
+                onClick={() => handleDownload(videoUrl, "video")}
+                disabled={downloadingType !== null}
+                className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
               >
-                ⚡ Download Video (MP4)
+                {downloadingType === "video" ? "Downloading MP4..." : "⚡ Direct Download MP4"}
               </button>
             )}
 
             {audioUrl && (
               <button
-                onClick={() => handleDirectDownload(audioUrl, `tiktok-audio-${Date.now()}.mp3`)}
-                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
+                onClick={() => handleDownload(audioUrl, "audio")}
+                disabled={downloadingType !== null}
+                className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
               >
-                🎵 Download Audio (MP3)
+                {downloadingType === "audio" ? "Downloading MP3..." : "🎵 Direct Download MP3"}
               </button>
             )}
           </div>
