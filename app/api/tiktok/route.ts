@@ -20,7 +20,6 @@ export async function GET(request: Request) {
     if (data.code === 0 && data.data) {
       const result = data.data;
 
-      // Kung photo slideshow / image posts
       if (result.images && result.images.length > 0) {
         return NextResponse.json({
           type: "image",
@@ -28,16 +27,15 @@ export async function GET(request: Request) {
         });
       }
 
-      // Kung regular video
       return NextResponse.json({
         type: "video",
         videoUrl: result.play,
         audioUrl: result.music,
       });
     } else {
-      return NextResponse.json({ error: "Hindi makuha ang media. Subukan muli." }, { status: 400 });
+      return NextResponse.json({ error: data.msg || "Hindi makuha ang media." }, { status: 400 });
     }
-  } catch (err) {
-    return NextResponse.json({ error: "May error sa pag-fetch ng media." }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: `Fetch Error: ${err.message || "Unknown error"}` }, { status: 500 });
   }
 }
