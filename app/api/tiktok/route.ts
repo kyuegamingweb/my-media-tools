@@ -1,62 +1,43 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const targetUrl = searchParams.get("url");
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const url = searchParams.get("url");
 
-  if (!targetUrl) {
-    return NextResponse.json({ error: "Missing URL" }, { status: 400 });
+  if (!url) {
+    return NextResponse.json({ error: "Walang link na ibinigay." }, { status: 400 });
   }
 
   try {
-    // Gagamit tayo ng tikwm API na mas stable para sa video, audio, at photo slideshows
-    const apiRes = await fetch(
-      `https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl)}`
-    );
+    const response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      },
+    });
 
-    if (!apiRes.ok) {
-      throw new Error("Failed to connect to TikTok parser");
-    }
+    const data = await response.json();
 
-    const json = await apiRes.json();
-    if (json.code !== 0 || !json.data) {
-      return NextResponse.json(
-        { error: "Hindi mahanap ang media sa link na ito. Siguraduhing tama ang URL." },
-        { status: 404 }
-      );
-    }
+    if (data.code === 0 && data.data) {
+      const result = data.data;
 
-    const data = json.data;
+      // Kung photo slideshow / image posts
+      if (result.images && result.images.length > 0) {
+        return NextResponse.json({
+          type: "image",
+          images: result.images,
+        });
+      }
 
-    // 1. Check kung Photo Slideshow ito
-    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-      return NextResponse.json({
-        type: "image",
-        images: data.images,
-        audioUrl: data.music || data.play || "",
-      });
-    }
-
-    // 2. Kung Video ito
-    const videoUrl = data.play || data.hdplay || "";
-    const audioUrl = data.music || "";
-
-    if (videoUrl) {
+      // Kung regular video
       return NextResponse.json({
         type: "video",
-        videoUrl,
-        audioUrl,
+        videoUrl: result.play,
+        audioUrl: result.music,
       });
+    } else {
+      return NextResponse.json({ error: "Hindi makuha ang media. Subukan muli." }, { status: 400 });
     }
-
-    return NextResponse.json(
-      { error: "Walang nahanap na valid media." },
-      { status: 404 }
-    );
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Error fetching media. Pakisubukan muli ang link." },
-      { status: 500 }
-    );
+  } catch (err) {
+    return NextResponse.json({ error: "May error sa pag-fetch ng media." }, { status: 500 });
   }
 }
