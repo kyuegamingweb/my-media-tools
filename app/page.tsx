@@ -23,7 +23,7 @@ export default function Home() {
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [resultAudioUrl, setResultAudioUrl] = useState("");
 
-  // States para sa Remove Background (May loading & progress)
+  // States para sa Remove Background
   const [loadingBg, setLoadingBg] = useState(false);
   const [bgProgress, setBgProgress] = useState("");
   const [resultBgImage, setResultBgImage] = useState("");
@@ -106,7 +106,7 @@ export default function Home() {
     }
   };
 
-  // Handler para sa Remove Background na may Progress
+  // Handler para sa Remove Background
   const handleRemoveBackground = async (file: File) => {
     if (!file) return;
     setLoadingBg(true);
@@ -170,7 +170,7 @@ export default function Home() {
       
       {/* Mobile Top Navbar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-[#111410] border-b border-[#1e251c]">
-        <div className="text-lg font-bold text-[#73ee98] tracking-wider">KYUE APPS</div>
+        <div className="text-lg font-bold text-[#73ee98] tracking-wider">KYUE TOOLS</div>
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="text-white p-2 focus:outline-none"
@@ -203,7 +203,7 @@ export default function Home() {
 
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#111410] p-6 flex-col gap-6 border-r border-[#1e251c] shrink-0">
-        <div className="text-xl font-bold text-[#73ee98] tracking-wider mb-2">KYUE APPS</div>
+        <div className="text-xl font-bold text-[#73ee98] tracking-wider mb-2">KYUE TOOLS</div>
         <nav className="flex flex-col gap-2">
           <button 
             onClick={() => handleTabChange("social")}
