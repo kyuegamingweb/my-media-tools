@@ -8,12 +8,21 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     if (data.code === 0) {
+      let downloadUrl = data.data.play;
+      
+      if (type === 'audio') {
+        downloadUrl = data.data.music;
+      } else if (type === 'photo') {
+        // Kung slideshow/photos, ibabalik ang unang image o ang listahan
+        downloadUrl = data.data.images?.[0] || data.data.play;
+      }
+
       return NextResponse.json({
         success: true,
-        downloadUrl: type === 'audio' ? data.data.music : data.data.play,
+        downloadUrl: downloadUrl,
       });
     }
-    return NextResponse.json({ success: false, error: "Video not found" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Error fetching media. Pakisubukan muli ang link." }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });
   }
