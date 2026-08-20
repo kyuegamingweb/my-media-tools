@@ -15,7 +15,6 @@ export default function Home() {
 
   const [loadingPhoto, setLoadingPhoto] = useState(false);
   
-  // States para sa Audio Extractor (may kasamang format selector na mp3 o wav)
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [audioFormat, setAudioFormat] = useState<"mp3" | "wav">("mp3");
   const [audioDownloadUrl, setAudioDownloadUrl] = useState("");
@@ -23,21 +22,21 @@ export default function Home() {
   
   const [extractedPhotos, setExtractedPhotos] = useState<string[]>([]);
   
+  // Background Remover states
   const [bgImage, setBgImage] = useState("");
   const [loadingBg, setLoadingBg] = useState(false);
 
-  // States para sa Photo Enhancer tool
+  // Photo Enhancer states
   const [enhanceImageSrc, setEnhanceImageSrc] = useState("");
   const [enhanceQuality, setEnhanceQuality] = useState(90);
   const [enhanceSharpness, setEnhanceSharpness] = useState(false);
   const [enhancedResultUrl, setEnhancedResultUrl] = useState("");
   const [loadingEnhance, setLoadingEnhance] = useState(false);
 
-  // States para sa bagong QR Code Generator tool
+  // QR Code Generator states
   const [qrInputText, setQrInputText] = useState("");
   const [qrGeneratedUrl, setQrGeneratedUrl] = useState("");
 
-  // State para sa copy notification sa donation
   const [copied, setCopied] = useState(false);
   const gcashNumber = "09288476050";
 
@@ -47,7 +46,6 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // 1. Video Process
   const handleProcessVideo = async () => {
     if (!videoUrl) return alert("Please enter a video link first!");
     setLoadingVideo(true);
@@ -98,7 +96,6 @@ export default function Home() {
     }
   };
 
-  // 3. Audio Process (Ginagamit ang napiling audioFormat: mp3 o wav)
   const handleProcessAudio = async () => {
     if (!audioUrl) return alert("Please enter an audio link first!");
     setLoadingAudio(true);
@@ -197,7 +194,6 @@ export default function Home() {
     }
   };
 
-  // Handler para sa Photo Enhancer
   const handleProcessEnhancePhoto = () => {
     if (!enhanceImageSrc) return alert("Please upload a photo first!");
     setLoadingEnhance(true);
@@ -262,7 +258,6 @@ export default function Home() {
     };
   };
 
-  // Handler para sa QR Code Generator
   const handleGenerateQRCode = () => {
     if (!qrInputText) return alert("Please enter a link or text first!");
     const encodedText = encodeURIComponent(qrInputText);
@@ -424,7 +419,6 @@ export default function Home() {
                   </div>
                   <p className="text-xs text-gray-400 mb-4">TikTok to MP3 / WAV</p>
                   
-                  {/* Format Selector */}
                   <div className="flex gap-2 mb-4">
                     <button 
                       onClick={() => setAudioFormat("mp3")}
@@ -491,7 +485,7 @@ export default function Home() {
               </div>
 
               {/* 4. Remove Background */}
-              <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 col-span-1 md:col-span-2 lg:col-span-1 flex flex-col justify-between">
+              <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-[#2d3f28] text-[#73ee98] text-xs px-2 py-1 rounded-md font-bold">👤</span>
@@ -501,41 +495,43 @@ export default function Home() {
                   
                   <label className="border-2 border-dashed border-[#2a3627] hover:border-[#73ee98] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer bg-[#111410] transition mb-4">
                     <span className="text-3xl mb-2">📁</span>
-                    <span className="text-xs text-gray-400 text-center">Drag & drop video or image here or click to select</span>
+                    <span className="text-xs text-gray-400 text-center">Click to select image</span>
                     <input 
                       type="file" 
+                      accept="image/*"
                       className="hidden" 
                       onChange={async (e) => {
-                        if(!e.target.files || e.target.files.length === 0) return;
+                        if (!e.target.files || e.target.files.length === 0) return;
+                        const file = e.target.files[0];
                         setLoadingBg(true);
                         try {
                           const { removeBackground } = await import("@imgly/background-removal");
-                          const blob = await removeBackground(e.target.files[0], {
-                            model: "medium",
-                            segmentation_threshold: 0.9,
-                            static: true
+                          const blob = await removeBackground(file, {
+                            publicPath: "https://static.img.ly/background-removal/data/"
                           });
                           setBgImage(URL.createObjectURL(blob));
-                        } catch {
+                        } catch (err) {
+                          console.error(err);
                           alert("Error removing background.");
+                        } finally {
+                          setLoadingBg(false);
                         }
-                        setLoadingBg(false);
                       }} 
                     />
                   </label>
                 </div>
 
-                {loadingBg && <p className="text-xs text-[#73ee98] text-center mb-2">Processing background removal (High Accuracy)...</p>}
+                {loadingBg && <p className="text-xs text-[#73ee98] text-center mb-2 animate-pulse">Removing background...</p>}
                 {bgImage && (
-                  <div className="mt-2">
-                    <img src={bgImage} className="rounded-xl max-h-24 mx-auto mb-2" alt="Result" />
-                    <a href={bgImage} download="removed-bg.png" className="block text-center bg-[#2d3f28] text-[#73ee98] py-2 rounded-xl text-xs font-bold">Download Result</a>
+                  <div className="mt-2 text-center">
+                    <img src={bgImage} className="rounded-xl max-h-20 mx-auto mb-2 bg-black/40 p-1" alt="Result" />
+                    <a href={bgImage} download="removed-bg.png" className="block bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-2 rounded-xl text-xs font-bold transition">Download Result</a>
                   </div>
                 )}
               </div>
 
               {/* 5. Photo Enhancer */}
-              <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 col-span-1 md:col-span-2 lg:col-span-1 flex flex-col justify-between">
+              <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-[#2d3f28] text-[#73ee98] text-xs px-2 py-1 rounded-md font-bold">✨</span>
@@ -612,7 +608,7 @@ export default function Home() {
               </div>
 
               {/* 6. QR Code Generator */}
-              <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 col-span-1 md:col-span-2 lg:col-span-1 flex flex-col justify-between">
+              <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-[#2d3f28] text-[#73ee98] text-xs px-2 py-1 rounded-md font-bold">🔳</span>
@@ -683,12 +679,15 @@ export default function Home() {
               <img 
                 src="/gcash-qr.png" 
                 alt="GCash QR Code" 
-                className="w-48 h-48 object-contain bg-white p-2 rounded-xl border border-[#2a3627]" 
+                className="w-48 h-48 object-contain bg-white p-2 rounded-xl"
               />
-              <p className="text-lg font-mono text-white tracking-wider">{gcashNumber}</p>
+              <div className="text-center">
+                <p className="text-xs text-gray-400 mb-1">GCash Number:</p>
+                <p className="text-lg font-bold text-[#73ee98]">{gcashNumber}</p>
+              </div>
               <button 
                 onClick={handleCopyGcash}
-                className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-3 rounded-xl font-bold text-sm transition"
+                className="w-full bg-[#2d3f28] hover:bg-[#354c30] text-[#73ee98] py-2.5 rounded-xl text-xs font-bold transition"
               >
                 {copied ? "Copied to Clipboard!" : "Copy GCash Number"}
               </button>
