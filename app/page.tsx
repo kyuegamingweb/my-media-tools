@@ -31,17 +31,15 @@ export default function Home() {
     }
   };
 
-  // DIRECT BLOB DOWNLOAD HANDLER (NO NEW TAB)
+  // FORCE BLOB DOWNLOAD (HINDI MAG-O-OPEN SA NEW TAB)
   const handleForceDownload = async () => {
     if (!videoUrl) return;
     setDownloading(true);
 
     try {
-      // Kukunin ang video stream sa client side
       const response = await fetch(videoUrl);
       const blob = await response.blob();
       
-      // Gagawan ng Blob File link sa memory ng browser
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -49,12 +47,11 @@ export default function Home() {
       document.body.appendChild(link);
       link.click();
       
-      // Cleanup
       document.body.removeChild(link);
       URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Direct download fallback:", error);
-      // Kapag ginipit ng CORS, gagamit ng CORS Proxy para mapilit ang download
+      // Fallback proxy kung may CORS
       const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(videoUrl)}`;
       const response = await fetch(corsProxyUrl);
       const blob = await response.blob();
@@ -104,7 +101,7 @@ export default function Home() {
               disabled={downloading}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-3 rounded-lg transition"
             >
-              {downloading ? "Downloading File..." : "Direct Download MP4"}
+              {downloading ? "Downloading File..." : "Download MP4"}
             </button>
           </div>
         )}
