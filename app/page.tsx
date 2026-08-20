@@ -6,12 +6,10 @@ import { removeBackground } from "@imgly/background-removal";
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"social" | "tools" | "donation">("tools");
   const [tiktokUrl, setTiktokUrl] = useState("");
-  const [loading, setLoading] = useState(false);
   const [bgImage, setBgImage] = useState("");
 
   const handleDownload = async (type: 'video' | 'audio') => {
-    if (!tiktokUrl) return;
-    setLoading(true);
+    if (!tiktokUrl) return alert("Enter URL");
     try {
       const res = await fetch("/api/tiktok", {
         method: "POST",
@@ -20,28 +18,37 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.success) window.open(data.downloadUrl, "_blank");
-      else alert("Error sa pag-fetch");
-    } catch { alert("Error"); }
-    setLoading(false);
+      else alert("Error: " + data.error);
+    } catch { alert("Connection Error"); }
   };
 
   return (
     <div className="flex min-h-screen bg-[#111410] text-[#e2e8f0] font-sans">
-      {/* SIDEBAR - DATING UI */}
+      {/* SIDEBAR */}
       <aside className="w-64 bg-[#111410] p-6 border-r border-[#1e251c]">
         <div className="text-xl font-bold text-[#73ee98] mb-8">KYUE TOOLS</div>
         <nav className="flex flex-col gap-2">
-          <button onClick={() => setActiveTab("social")} className={`px-4 py-3 rounded-2xl ${activeTab === "social" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"}`}>🌐 Social</button>
-          <button onClick={() => setActiveTab("tools")} className={`px-4 py-3 rounded-2xl ${activeTab === "tools" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"}`}>🛠 Tools</button>
-          <button onClick={() => setActiveTab("donation")} className={`px-4 py-3 rounded-2xl ${activeTab === "donation" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"}`}>💳 Donation</button>
+          <button onClick={() => setActiveTab("social")} className={`px-4 py-3 rounded-2xl flex items-center gap-3 ${activeTab === "social" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"}`}>🌐 Social</button>
+          <button onClick={() => setActiveTab("tools")} className={`px-4 py-3 rounded-2xl flex items-center gap-3 ${activeTab === "tools" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"}`}>🛠 Tools</button>
+          <button onClick={() => setActiveTab("donation")} className={`px-4 py-3 rounded-2xl flex items-center gap-3 ${activeTab === "donation" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"}`}>💳 Donation</button>
         </nav>
       </aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 p-8">
+        {activeTab === "social" && (
+          <div className="text-white">
+            <h2 className="text-2xl font-bold mb-6">Social Links</h2>
+            <div className="space-y-4">
+              <a href="#" className="block p-4 bg-[#1c231a] rounded-xl border border-[#2a3627]">TikTok Profile</a>
+              <a href="#" className="block p-4 bg-[#1c231a] rounded-xl border border-[#2a3627]">Instagram Profile</a>
+            </div>
+          </div>
+        )}
+
         {activeTab === "tools" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* TIKTOK CARD */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* TikTok Downloader */}
             <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6">
               <h2 className="font-bold text-white mb-4">TikTok Downloader</h2>
               <input className="w-full bg-[#111410] border border-[#2a3627] p-3 rounded-xl mb-3 text-white" value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} placeholder="URL" />
@@ -51,7 +58,14 @@ export default function Home() {
               </div>
             </div>
 
-            {/* REMOVE BG CARD */}
+            {/* Photo Downloader */}
+            <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6">
+              <h2 className="font-bold text-white mb-4">Photo Downloader</h2>
+              <input className="w-full bg-[#111410] border border-[#2a3627] p-3 rounded-xl mb-3 text-white" placeholder="URL" />
+              <button className="w-full bg-[#2a3627] text-white py-2 rounded-xl font-bold">Download Photo</button>
+            </div>
+
+            {/* Remove Background */}
             <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6">
               <h2 className="font-bold text-white mb-4">Remove Background</h2>
               <input type="file" onChange={async (e) => {
@@ -63,9 +77,14 @@ export default function Home() {
             </div>
           </div>
         )}
-        
-        {activeTab === "donation" && <div className="text-white p-6">GCASH Details: 09XX-XXX-XXXX</div>}
-        {activeTab === "social" && <div className="text-white p-6">Social Links</div>}
+
+        {activeTab === "donation" && (
+          <div className="text-white p-6 bg-[#1c231a] rounded-3xl border border-[#2a3627]">
+            <h2 className="text-2xl font-bold mb-4">Donation</h2>
+            <p>GCash Details:</p>
+            <p className="text-[#73ee98] font-bold text-xl">09XX-XXX-XXXX</p>
+          </div>
+        )}
       </main>
     </div>
   );
