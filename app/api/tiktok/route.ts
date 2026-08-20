@@ -9,41 +9,38 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Walang link na ibinigay." }, { status: 400 });
     }
 
-    // Ginamit ang POST method para hindi ma-block ng WAF/Cloudflare ang server request
-    const response = await fetch("https://www.tikwm.com/api/", {
-      method: "POST",
+    // Subukan muna natin ang TikWM API sa pamamagitan ng GET na may mas kumpletong headers
+    let response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`, {
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest"
       },
-      body: `url=${encodeURIComponent(url)}&hd=1`,
     });
 
-    if (!response.ok) {
-      return NextResponse.json({ error: `API Error: Status ${response.status}` }, { status: 500 });
+    let data = await response.json();
+
+    // Kung sakaling mag-fail, subukan ang alternative endpoint o format
+    if (!data || data.code !== 0) {
+      return NextResponse.json({ error: "Kasalukuyang hinaharangan ng TikTok/Cloudflare ang request. Subukan mamaya." }, { status: 400 });
     }
 
-    const data = await response.json();
+    const result = data.data;
 
-    if (data.code === 0 && data.data) {
-      const result = data.data;
-
-      if (result.images && result.images.length > 0) {
-        return NextResponse.json({
-          type: "image",
-          images: result.images,
-        });
-      }
-
+    if (result.images && result.images.length > 0) {
       return NextResponse.json({
-        type: "video",
-        videoUrl: result.play || result.hdplay,
-        audioUrl: result.music,
+        type: "image",
+        images: result.images,
       });
-    } else {
-      return NextResponse.json({ error: data.msg || "Hindi makuha ang media sa link na ito." }, { status: 400 });
     }
+
+    return NextResponse.json({
+      type: "video",
+      videoUrl: result.play || result.hdplay,
+      audioUrl: result.music,
+    });
+
   } catch (err: any) {
-    return NextResponse.json({ error: `Server Error: ${err.message || "Unknown error"}` }, { status: 500 });
+    return NextResponse.json({ error: `Connection Error: ${err.message}` }, { status: 500 });
   }
 }
