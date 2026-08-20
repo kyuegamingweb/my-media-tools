@@ -34,31 +34,35 @@ export default function Home() {
     }
   };
 
-  const handleDownload = async (mediaUrl: string, type: "video" | "audio") => {
+  const handleDirectDownload = async (mediaUrl: string, type: "video" | "audio") => {
     if (!mediaUrl) return;
     setDownloadingType(type);
 
-    try {
-      const proxyUrl = `/api/download?url=${encodeURIComponent(mediaUrl)}&type=${type}`;
-      const res = await fetch(proxyUrl);
-      
-      if (!res.ok) throw new Error("Stream error");
+    const extension = type === "audio" ? "mp3" : "mp4";
+    const filename = `tiktok-${type}-${Date.now()}.${extension}`;
 
+    try {
+      // Direct browser fetching to bypass server proxy limits
+      const res = await fetch(mediaUrl);
       const blob = await res.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      const ext = type === "audio" ? "mp3" : "mp4";
 
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `tiktok-${type}-${Date.now()}.${ext}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error(err);
-      alert("Nagka-error sa pag-download. Susubukan ang direct link.");
-      window.open(mediaUrl, "_blank");
+    } catch (error) {
+      // Invisible silent download fallback
+      const a = document.createElement("a");
+      a.href = mediaUrl;
+      a.download = filename;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
     } finally {
       setDownloadingType(null);
     }
@@ -98,7 +102,7 @@ export default function Home() {
           <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
             {videoUrl && (
               <button
-                onClick={() => handleDownload(videoUrl, "video")}
+                onClick={() => handleDirectDownload(videoUrl, "video")}
                 disabled={downloadingType !== null}
                 className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
               >
@@ -108,7 +112,7 @@ export default function Home() {
 
             {audioUrl && (
               <button
-                onClick={() => handleDownload(audioUrl, "audio")}
+                onClick={() => handleDirectDownload(audioUrl, "audio")}
                 disabled={downloadingType !== null}
                 className="w-full bg-[#1e291b] hover:bg-[#283824] active:scale-[0.98] disabled:bg-[#181f16] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#2d4528]"
               >

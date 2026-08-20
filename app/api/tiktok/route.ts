@@ -8,23 +8,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
   }
 
+  // Primary Scraper: TikWM
   try {
-    const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl.trim())}`);
+    const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl.trim())}`, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      cache: "no-store",
+    });
     const result = await res.json();
 
     if (result.code === 0 && result.data) {
       return NextResponse.json({
         videoUrl: result.data.play || result.data.wmplay,
-        audioUrl: result.data.music || result.data.music_info?.play,
+        audioUrl: result.data.music || result.data.music_info?.play || result.data.play,
       });
     }
   } catch (e) {
-    console.error("TikWM error:", e);
+    console.error("TikWM failed");
   }
 
-  // Backup Provider (Tiklydown)
+  // Backup Scraper: Tiklydown
   try {
-    const resBackup = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl.trim())}`);
+    const resBackup = await fetch(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl.trim())}`, {
+      cache: "no-store",
+    });
     const backupResult = await resBackup.json();
 
     if (backupResult.video?.noWatermark) {
@@ -34,8 +40,8 @@ export async function GET(request: NextRequest) {
       });
     }
   } catch (e) {
-    console.error("Backup provider error:", e);
+    console.error("Backup failed");
   }
 
-  return NextResponse.json({ error: "Hindi makuha ang link. Siguraduhing tama ang TikTok URL." }, { status: 400 });
+  return NextResponse.json({ error: "Hindi makuha ang link. Pakisiguradong tama ang TikTok URL." }, { status: 400 });
 }
