@@ -4,7 +4,7 @@ import { useState } from "react";
 import { removeBackground } from "@imgly/background-removal";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"social" | "tools">("social");
+  const [activeTab, setActiveTab] = useState<"social" | "tools" | "donation">("social");
   const [isAnimating, setIsAnimating] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -30,7 +30,7 @@ export default function Home() {
 
   const [downloading, setDownloading] = useState(false);
 
-  const handleTabChange = (tab: "social" | "tools") => {
+  const handleTabChange = (tab: "social" | "tools" | "donation") => {
     if (tab === activeTab) return;
     setIsAnimating(true);
     setMobileMenuOpen(false);
@@ -198,6 +198,14 @@ export default function Home() {
           >
             🛠 Tools
           </button>
+          <button 
+            onClick={() => handleTabChange("donation")}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium ${
+              activeTab === "donation" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"
+            }`}
+          >
+            💳 Donation
+          </button>
         </div>
       )}
 
@@ -225,6 +233,17 @@ export default function Home() {
             }`}
           >
             🛠 Tools
+          </button>
+
+          <button 
+            onClick={() => handleTabChange("donation")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+              activeTab === "donation" 
+                ? "bg-[#2d3f28] text-[#73ee98] font-semibold shadow-lg border border-[#385032] translate-x-1" 
+                : "text-gray-400 hover:text-white hover:bg-[#182016]"
+            }`}
+          >
+            💳 Donation
           </button>
         </nav>
       </aside>
@@ -518,7 +537,18 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* GCASH DONATION CARD (Nakalagay sa ibaba ng Tools) */}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "donation" && (
+            <div>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-2 tracking-tight">Donation</h1>
+              <p className="text-gray-400 text-sm mb-8">Support the development of Kyue Tools by sending a donation:</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                {/* GCASH DONATION CARD (May GCash Number na) */}
                 <div className="bg-[#1c231a] border border-[#2a3627] hover:border-[#007dfc] transition-all rounded-[28px] p-6 flex flex-col justify-between shadow-lg group">
                   <div>
                     <div className="flex items-center gap-3 mb-4">
@@ -537,14 +567,13 @@ export default function Home() {
                           className="w-28 h-28 object-contain rounded-xl border border-[#2a3627] bg-white p-1" 
                         />
                       </div>
-                      <p className="text-xs text-gray-300 font-medium">Name: <span className="text-white font-bold">Kyue</span></p>
-                      <p className="text-xs text-gray-300 font-medium">Number: <span className="text-[#73ee98] font-bold">0912-345-6789</span></p>
+                      <p className="text-xs text-gray-300 font-medium">Number: <span className="text-[#73ee98] font-bold text-sm">09288476050</span></p>
                     </div>
                   </div>
 
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("09123456789");
+                      navigator.clipboard.writeText("09288476050");
                       alert("GCash number copied to clipboard!");
                     }}
                     className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-bold py-2.5 rounded-xl text-xs border border-[#3e5837] transition"
