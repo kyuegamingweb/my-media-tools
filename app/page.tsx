@@ -11,9 +11,6 @@ export default function Home() {
   const [videoUrl, setVideoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
 
-  // Video Compressor State
-  const [speed, setSpeed] = useState<"Slow" | "Medium" | "Fast">("Medium");
-
   const handleTikTokSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tiktokUrl) return;
@@ -92,13 +89,12 @@ export default function Home() {
       <main className="flex-1 p-8 bg-[#161a14] rounded-l-[40px] border-l border-[#222a1f] my-3 mr-3 shadow-2xl overflow-y-auto">
         <h1 className="text-3xl font-extrabold text-white mb-8 tracking-tight">Tools</h1>
 
-        {/* Tools Cards Grid */}
+        {/* Tools Cards Grid - TikTok Downloader Only */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          {/* TOOL 1: TikTok Downloader */}
           <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">HQ</div>
                   <div>
@@ -109,21 +105,21 @@ export default function Home() {
               </div>
 
               <form onSubmit={handleTikTokSubmit} className="space-y-4 mb-4">
-                <div className="border-2 border-dashed border-[#2f3d2b] rounded-2xl p-6 text-center bg-[#151a13] hover:border-[#4ade80] transition">
-                  <div className="text-xl mb-1 text-gray-400">📥</div>
+                <div className="bg-[#141812] border border-[#283525] focus-within:border-[#73ee98] rounded-2xl p-3 flex items-center gap-2 transition">
+                  <span className="text-gray-500 pl-2 text-sm">🔗</span>
                   <input 
                     type="text" 
                     placeholder="Paste TikTok link here..." 
                     value={tiktokUrl}
                     onChange={(e) => setTiktokUrl(e.target.value)}
-                    className="w-full bg-transparent text-xs text-center text-white focus:outline-none placeholder-gray-500"
+                    className="w-full bg-transparent text-xs text-white focus:outline-none placeholder-gray-500"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-bold py-3 rounded-xl transition text-xs border border-[#3e5837] shadow"
+                  className="w-full bg-[#2d3f28] hover:bg-[#385032] text-[#73ee98] font-bold py-3.5 rounded-xl transition text-xs border border-[#3e5837] shadow"
                 >
                   {loading ? "Processing..." : "Extract Media"}
                 </button>
@@ -151,72 +147,9 @@ export default function Home() {
               )}
             </div>
 
-            <div className="mt-4 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
+            <div className="mt-6 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
               <span className="text-[#73ee98] font-bold">ℹ</span>
               <span>Restructures MP4 container metadata directly without compression.</span>
-            </div>
-          </div>
-
-          {/* TOOL 2: Video Compressor */}
-          <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">📹</div>
-                  <div>
-                    <h2 className="text-base font-bold text-white">Video Compressor</h2>
-                    <span className="text-xs text-gray-400">FFmpeg WASM <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-2 border-dashed border-[#2f3d2b] rounded-2xl p-8 text-center bg-[#151a13] cursor-pointer hover:border-[#4ade80] transition mb-4">
-                <div className="text-2xl mb-1 text-gray-400">📄</div>
-                <p className="text-xs text-gray-400">Drag & drop video here or click to select</p>
-              </div>
-
-              <div className="bg-[#151a13] p-1.5 rounded-xl flex gap-1 mb-4 border border-[#242e20]">
-                {(["Slow", "Medium", "Fast"] as const).map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setSpeed(item)}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition ${speed === item ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400 hover:text-white"}`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-[#141812] p-3.5 rounded-xl border border-[#232d20] space-y-1.5 text-xs">
-              <div className="text-gray-300 font-medium">⚙ Codec: <span className="text-white">H.264 (libx264)</span></div>
-              <div className="text-gray-300 font-medium">📈 Preset: <span className="text-white">{speed}</span></div>
-              <div className="text-gray-300 font-medium">HQ CRF: <span className="text-[#73ee98]">20 (High Quality)</span></div>
-            </div>
-          </div>
-
-          {/* TOOL 3: Audio Extractor */}
-          <div className="bg-[#1c231a] border border-[#2a3627] rounded-[28px] p-6 flex flex-col justify-between shadow-lg">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-[#283823] text-[#73ee98] rounded-xl font-bold text-xs">🎵</div>
-                  <div>
-                    <h2 className="text-base font-bold text-white">Audio Extractor</h2>
-                    <span className="text-xs text-gray-400">Video to Audio <span className="bg-[#2d3f28] text-[#73ee98] px-1.5 py-0.5 rounded text-[10px]">1.0.0</span></span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-2 border-dashed border-[#2f3d2b] rounded-2xl p-12 text-center bg-[#151a13] cursor-pointer hover:border-[#4ade80] transition">
-                <div className="text-2xl mb-1 text-gray-400">📄</div>
-                <p className="text-xs text-gray-400">Drag & drop video here or click to select</p>
-              </div>
-            </div>
-
-            <div className="mt-4 bg-[#141812] p-3 rounded-xl border border-[#232d20] text-[11px] text-gray-400 flex items-start gap-2">
-              <span className="text-[#73ee98] font-bold">ℹ</span>
-              <span>Extract high quality MP3/AAC audio files directly from any local video file.</span>
             </div>
           </div>
 
