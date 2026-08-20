@@ -9,14 +9,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Walang link na ibinigay." }, { status: 400 });
     }
 
-    const response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`, {
+    // Ginamit ang POST method para hindi ma-block ng WAF/Cloudflare ang server request
+    const response = await fetch("https://www.tikwm.com/api/", {
+      method: "POST",
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
       },
+      body: `url=${encodeURIComponent(url)}&hd=1`,
     });
 
     if (!response.ok) {
-      return NextResponse.json({ error: "Hindi ma-access ang TikTok service." }, { status: 500 });
+      return NextResponse.json({ error: `API Error: Status ${response.status}` }, { status: 500 });
     }
 
     const data = await response.json();
@@ -33,7 +37,7 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         type: "video",
-        videoUrl: result.play,
+        videoUrl: result.play || result.hdplay,
         audioUrl: result.music,
       });
     } else {
