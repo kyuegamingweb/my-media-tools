@@ -5,6 +5,7 @@ import { useState } from "react";
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"social" | "tools">("tools");
   const [isAnimating, setIsAnimating] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // States para sa Video Downloader
   const [videoInputUrl, setVideoInputUrl] = useState("");
@@ -26,6 +27,7 @@ export default function Home() {
   const handleTabChange = (tab: "social" | "tools") => {
     if (tab === activeTab) return;
     setIsAnimating(true);
+    setMobileMenuOpen(false);
     setTimeout(() => {
       setActiveTab(tab);
       setIsAnimating(false);
@@ -98,7 +100,7 @@ export default function Home() {
     }
   };
 
-  // Direktang pag-download gamit ang Blob para gumana sa browser
+  // Direktang pag-download gamit ang Blob
   const downloadFile = async (targetUrl: string, type: "video" | "audio" | "image", index?: number) => {
     if (!targetUrl) return;
     setDownloading(true);
@@ -130,9 +132,43 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#111410] text-[#e2e8f0] font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#111410] p-6 flex flex-col gap-6 border-r border-[#1e251c]">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#111410] text-[#e2e8f0] font-sans overflow-x-hidden">
+      
+      {/* Mobile Top Navbar */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-[#111410] border-b border-[#1e251c]">
+        <div className="text-lg font-bold text-[#73ee98] tracking-wider">KYUE APPS</div>
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="text-white p-2 focus:outline-none"
+        >
+          {mobileMenuOpen ? "✕ Close" : "☰ Menu"}
+        </button>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-[#111410] border-b border-[#1e251c] p-4 flex flex-col gap-2">
+          <button 
+            onClick={() => handleTabChange("social")}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium ${
+              activeTab === "social" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"
+            }`}
+          >
+            🌐 Social
+          </button>
+          <button 
+            onClick={() => handleTabChange("tools")}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium ${
+              activeTab === "tools" ? "bg-[#2d3f28] text-[#73ee98]" : "text-gray-400"
+            }`}
+          >
+            🛠 Tools
+          </button>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-64 bg-[#111410] p-6 flex-col gap-6 border-r border-[#1e251c] shrink-0">
         <div className="text-xl font-bold text-[#73ee98] tracking-wider mb-2">KYUE APPS</div>
         <nav className="flex flex-col gap-2">
           <button 
@@ -159,12 +195,12 @@ export default function Home() {
         </nav>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 bg-[#161a14] rounded-l-[40px] border-l border-[#222a1f] my-3 mr-3 shadow-2xl overflow-y-auto">
+      {/* Main Content Area */}
+      <main className="flex-1 p-4 md:p-8 bg-[#161a14] md:rounded-l-[40px] md:border-l border-[#222a1f] md:my-3 md:mr-3 shadow-2xl overflow-y-auto">
         <div className={`transition-all duration-300 ${isAnimating ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}>
           {activeTab === "social" && (
             <div>
-              <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">Social Platforms</h1>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-2 tracking-tight">Social Platforms</h1>
               <p className="text-gray-400 text-sm mb-8">Pumili ng social media card o tool na gusto mong buksan:</p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -203,7 +239,7 @@ export default function Home() {
 
           {activeTab === "tools" && (
             <div>
-              <h1 className="text-3xl font-extrabold text-white mb-8 tracking-tight">Tools</h1>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-8 tracking-tight">Tools</h1>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
