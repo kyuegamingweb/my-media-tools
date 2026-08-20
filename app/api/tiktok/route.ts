@@ -9,18 +9,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const apiUrl = `https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl)}`;
-    const res = await fetch(apiUrl);
-    const data = await res.json();
+    // Stable TikTok Scraper Endpoint (TikWM)
+    const response = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl)}`);
+    const result = await response.json();
 
-    const videoLink = data.video?.noWatermark || data.url;
-
-    if (!videoLink) {
-      return NextResponse.json({ error: "Video link not found" }, { status: 404 });
+    if (result.code === 0 && result.data) {
+      // Direct HD No-Watermark MP4 Link
+      const playUrl = result.data.play || result.data.wmplay;
+      return NextResponse.json({ downloadUrl: playUrl });
+    } else {
+      return NextResponse.json({ error: "Invalid link or video not found" }, { status: 404 });
     }
-
-    return NextResponse.json({ downloadUrl: videoLink });
   } catch (err) {
-    return NextResponse.json({ error: "API fetch failed" }, { status: 500 });
+    console.error("TikTok API Error:", err);
+    return NextResponse.json({ error: "Failed to connect to TikTok parser" }, { status: 500 });
   }
 }

@@ -9,33 +9,31 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 1. Kukunin ang totoong video file gamit ang backend server
+    // Kinukuha ang video buffer sa server side para maipasa bilang file download
     const response = await fetch(videoUrl, {
-      method: "GET",
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Referer: "https://www.tiktok.com/",
       },
-      redirect: "follow", // Susundan ang lahat ng CDN redirects
     });
 
-    if (!response.ok) throw new Error("Failed to fetch video file");
+    if (!response.ok) {
+      return NextResponse.json({ error: "Failed to fetch video" }, { status: 500 });
+    }
 
-    // 2. Kukunin bilang raw ArrayBuffer (Binary Data)
-    const videoData = await response.arrayBuffer();
+    const videoBuffer = await response.arrayBuffer();
 
-    // 3. I-pumilit sa browser na ITREAT ITO BILANG DOWNLOADABLE FILE (.mp4)
-    return new NextResponse(videoData, {
+    return new NextResponse(videoBuffer, {
       status: 200,
       headers: {
-        "Content-Type": "application/octet-stream",
+        "Content-Type": "video/mp4",
         "Content-Disposition": 'attachment; filename="tiktok-video.mp4"',
-        "Content-Length": videoData.byteLength.toString(),
+        "Cache-Control": "no-cache",
       },
     });
   } catch (error) {
-    console.error("Download error:", error);
-    return NextResponse.json({ error: "Failed to download video" }, { status: 500 });
+    console.error("Download Error:", error);
+    return NextResponse.json({ error: "Server error during download" }, { status: 500 });
   }
 }
