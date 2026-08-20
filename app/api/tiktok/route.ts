@@ -14,7 +14,6 @@ export async function POST(req: Request) {
 
     if (data.code === 0) {
       if (type === 'photo') {
-        // Ibinabalik ang buong array ng images para sa slideshow photos
         return NextResponse.json({
           success: true,
           images: data.data.images || [data.data.play],
@@ -33,7 +32,7 @@ export async function POST(req: Request) {
     }
     
     return NextResponse.json({ success: false, error: "Hindi mahanap ang media. Pakisubukan ang ibang link." }, { status: 400 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false, error: "Server error sa pag-fetch ng link." }, { status: 500 });
   }
 }
