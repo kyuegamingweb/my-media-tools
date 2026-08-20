@@ -6,17 +6,16 @@ import { removeBackground } from "@imgly/background-removal";
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"social" | "tools" | "donation">("tools");
   
-  // States para sa TikTok tools
   const [videoUrl, setVideoUrl] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   
-  // States para sa Remove BG
   const [bgImage, setBgImage] = useState("");
   const [loadingBg, setLoadingBg] = useState(false);
 
   const handleDownload = async (url: string, type: 'video' | 'audio' | 'photo') => {
-    if (!url) return alert("Ilagay ang link muna.");
+    if (!url) return alert("Ilagay muna ang link!");
+    
     try {
       const res = await fetch("/api/tiktok", {
         method: "POST",
@@ -24,8 +23,16 @@ export default function Home() {
         body: JSON.stringify({ url, type }),
       });
       const data = await res.json();
+      
       if (data.success) {
-        window.open(data.downloadUrl, "_blank");
+        // Direct download / bukas ng link
+        const a = document.createElement('a');
+        a.href = data.downloadUrl;
+        a.target = '_blank';
+        a.download = `tiktok-${type}.${type === 'audio' ? 'mp3' : 'mp4'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } else {
         alert(data.error);
       }
