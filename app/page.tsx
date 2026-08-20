@@ -256,15 +256,15 @@ export default function Home() {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center border-t border-[#2a3627] pt-4 mt-4">
                     <div>
-                      <div className="font-bold text-white text-sm">---</div>
+                      <div className="font-bold text-white text-sm">3</div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Posts</div>
                     </div>
                     <div>
-                      <div className="font-bold text-white text-sm">---</div>
+                      <div className="font-bold text-white text-sm">112</div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Followers</div>
                     </div>
                     <div>
-                      <div className="font-bold text-white text-sm">---</div>
+                      <div className="font-bold text-white text-sm">114</div>
                       <div className="text-[9px] text-gray-500 uppercase tracking-widest">Following</div>
                     </div>
                   </div>
