@@ -25,13 +25,13 @@ export default function Home() {
       }
     } catch (err) {
       console.error(err);
-      alert("Error sa pag-fetch ng TikTok link.");
+      alert("May error sa pag-fetch ng TikTok link.");
     } finally {
       setLoading(false);
     }
   };
 
-  // DIRECT FILE DOWNLOAD LOGIC (WALANG NEW TAB)
+  // DIRECT FILE DOWNLOAD (WALANG NEW TAB)
   const handleForceDownload = async () => {
     if (!videoUrl) return;
     setDownloading(true);
@@ -70,41 +70,50 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#0d0f0c] text-white">
-      <div className="max-w-md w-full bg-[#141813] p-8 rounded-3xl border border-[#232a21] text-center shadow-2xl">
-        <h1 className="text-3xl font-bold text-[#86efac] leading-tight mb-2">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#090b08] text-white selection:bg-[#4ade80] selection:text-black">
+      {/* CARD CONTAINER WITH PRO GLOW */}
+      <div className="max-w-md w-full bg-[#121611]/90 backdrop-blur-md p-8 rounded-[32px] border border-[#232b20] text-center shadow-[0_0_50px_-12px_rgba(74,222,128,0.15)] relative overflow-hidden">
+        
+        {/* TITLE */}
+        <h1 className="text-3xl font-extrabold text-[#73ee98] tracking-tight leading-snug mb-2">
           TikTok <br /> Downloader & <br /> Audio Extractor
         </h1>
 
-        <p className="text-gray-400 text-sm mb-8">
+        {/* SUBTITLE */}
+        <p className="text-gray-400 text-sm font-medium mb-8 leading-relaxed">
           100% Free, Clean, & Ad-Free <br /> Downloader
         </p>
 
+        {/* INPUT & BUTTON FORM */}
         <form onSubmit={handleProcess} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Paste TikTok link here..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full p-4 rounded-2xl bg-[#1a2019] text-gray-200 border border-[#2a3428] focus:outline-none focus:border-[#4ade80] placeholder-gray-500"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Paste TikTok link here..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="w-full px-5 py-4 rounded-2xl bg-[#181f16] text-gray-100 border border-[#283525] focus:outline-none focus:border-[#4ade80] focus:ring-1 focus:ring-[#4ade80] placeholder-gray-500 transition-all duration-200 text-sm"
+            />
+          </div>
 
           <button
             type="submit"
-            className="w-full bg-[#274020] hover:bg-[#325429] text-[#86efac] font-semibold py-4 rounded-2xl transition duration-200"
+            disabled={loading}
+            className="w-full bg-[#233a1c] hover:bg-[#2c4b24] active:scale-[0.98] text-[#73ee98] font-bold py-4 rounded-2xl transition-all duration-200 border border-[#34572a] shadow-lg disabled:opacity-50"
           >
             {loading ? "Processing..." : "Get Download Links"}
           </button>
         </form>
 
+        {/* RESULT AREA */}
         {videoUrl && (
-          <div className="mt-6 pt-6 border-t border-[#232a21]">
+          <div className="mt-6 pt-6 border-t border-[#232b20] space-y-3">
             <button
               onClick={handleForceDownload}
               disabled={downloading}
-              className="w-full bg-[#325429] hover:bg-[#3f6a34] disabled:bg-[#1a2019] text-white font-semibold py-4 rounded-2xl transition duration-200"
+              className="w-full bg-[#325827] hover:bg-[#3d6c30] active:scale-[0.98] disabled:bg-[#181f16] text-white font-bold py-4 rounded-2xl transition-all duration-200 shadow-lg border border-[#487a3a]"
             >
-              {downloading ? "Downloading File..." : "Download MP4"}
+              {downloading ? "Downloading MP4..." : "⚡ Direct Download MP4"}
             </button>
           </div>
         )}
