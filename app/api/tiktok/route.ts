@@ -9,58 +9,50 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Gagamit tayo ng tikwm API na mas stable para sa video, audio, at photo slideshows
     const apiRes = await fetch(
-      `https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(targetUrl)}`
+      `https://www.tikwm.com/api/?url=${encodeURIComponent(targetUrl)}`
     );
 
     if (!apiRes.ok) {
-      throw new Error("Failed to fetch from TikTok API service");
+      throw new Error("Failed to connect to TikTok parser");
     }
 
-    const data = await apiRes.json();
-
-    // 1. Pagsusuri para sa Photo Slideshows
-    let rawImages = data.images || data.image_post_info?.images || data.slider || [];
-    let imageUrls: string[] = [];
-
-    if (Array.isArray(rawImages) && rawImages.length > 0) {
-      imageUrls = rawImages.map((img: any) => {
-        if (typeof img === "string") return img;
-        return img.url || img.url_list?.[0] || img.image_url?.url_list?.[0] || "";
-      }).filter(Boolean);
+    const json = await apiRes.json();
+    if (json.code !== 0 || !json.data) {
+      return NextResponse.json(
+        { error: "Hindi mahanap ang media sa link na ito. Siguraduhing tama ang URL." },
+        { status: 404 }
+      );
     }
 
-    // 2. Pagsusuri para sa Video URL
-    const videoUrl =
-      data.video?.noWatermark ||
-      data.video?.watermark ||
-      data.video?.play_addr?.url_list?.[0] || "";
+    const data = json.data;
 
-    // 3. Pagsusuri para sa Audio / MP3 URL
-    const audioUrl =
-      data.music?.play_url ||
-      data.audio?.play_url ||
-      data.music ||
-      "";
-
-    // I-return ang tamang format batay sa kung ano ang nahanap
-    if (imageUrls.length > 0) {
+    // 1. Check kung Photo Slideshow ito
+    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
       return NextResponse.json({
         type: "image",
-        images: imageUrls,
-        audioUrl: audioUrl || videoUrl,
+        images: data.images,
+        audioUrl: data.music || data.play || "",
       });
     }
+
+    // 2. Kung Video ito
+    const videoUrl = data.play || data.hdplay || "";
+    const audioUrl = data.music || "";
 
     if (videoUrl) {
       return NextResponse.json({
         type: "video",
         videoUrl,
-        audioUrl: audioUrl || videoUrl,
+        audioUrl,
       });
     }
 
-    return NextResponse.json({ error: "Walang nahanap na media sa link na ito." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Walang nahanap na valid media." },
+      { status: 404 }
+    );
   } catch (error: any) {
     return NextResponse.json(
       { error: "Error fetching media. Pakisubukan muli ang link." },
